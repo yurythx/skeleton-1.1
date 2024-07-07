@@ -1,0 +1,182 @@
+
+
+instale o python na maquina
+
+
+
+primeiro atualizar o pip pra versão mais atualizar
+
+    -- python.exe -m pip install --upgrade pip
+
+
+Ambiente Virtual
+
+        Criando ambiente virtual
+
+            -- python -m venv meu_ambiente_virtual
+
+        ativando ambiente virtual
+
+        No Windows:
+
+            -- meu_ambiente_virtual\Scripts\activate
+            
+        No macOS e Linux:
+
+            -- source meu_ambiente_virtual/bin/activate
+
+        No Microsoft Windows, pode ser necessário ativar o script Activate.ps1, definindo a política de execução para o usuário. Você pode fazer isso executando o seguinte comando do PowerShell:
+
+            -- PS C:> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+        Como Desativar um Ambiente Virtual
+
+            -- deactivate
+
+        Como Instalar Pacotes em um Ambiente Virtual
+
+            -- pip install nome_do_pacote
+
+        instalando requerimentos quando existirem
+
+            -- pip install requests
+
+        Rodando o ambiente Virtual para começar o projeto 
+
+            -- python -m venv meu_projeto  
+
+
+Django
+
+    instalando o django no Ambiente Virtual 
+
+        -- pip install Django
+
+    Criando o projeto com Django
+
+        -- django-admin startproject blog_base .
+
+    Rodando o servidor
+
+        -- python manage.py runserver
+
+    comando pra gerar secret ket
+
+        -- python -c "import string as s;from secrets import SystemRandom as SR;print(''.join(SR().choices(s.ascii_letters + s.digits + s.punctuation, k=64)));"
+
+    criando super user
+
+        -- python manage.py createsuperuser
+
+        -- python manage.py migrate
+
+        -- python manage.py makemigrations
+
+        -- python manage.py startapp blog
+
+
+GIT
+
+        Comandos basicos GIT
+
+            git help add
+            git help commit
+            git help <qualquer_comando_git>
+
+            Setar usuário
+                git config --global user.name "Yurii Menezes"
+
+            Setar email
+                git config --global user.email yurythx@gmail.com
+
+            Criar novo repositório
+                git init
+
+            Verificar estado dos arquivos/diretórios
+                git status
+            
+            Adicionar um arquivo em específico
+                git add meu_arquivo.txt
+
+            Adicionar um diretório em específico
+                git add meu_diretorio
+
+            Adicionar todos os arquivos/diretórios
+                git add .
+
+            Comitar um arquivo
+                git commit -m "minha mensagem de commit"
+
+            Comitar vários arquivos
+                git commit meu_arquivo.txt meu_outro_arquivo.txt
+
+            Comitar informando mensagem
+                git commit meuarquivo.txt -m "minha mensagem de commit"
+
+            git push <nome do repositório> <nome da branch>
+            git push origin master
+            git push --all
+
+            Remover arquivo
+                git rm meu_arquivo.txt
+
+            Remover diretório
+                git rm -r diretorio
+
+
+        Comandos explicados
+
+
+                        git clone
+                        Git clone é uma comando para baixar o código-fonte existente de um repositório remoto (como, por exemplo, o Github).
+
+                            -- git clone https://github.com/yurythx/Projeto_Prometheus.git
+
+                        git branch
+                        Branches (algo como ramificações, em português) são altamente importantes no mundo do git. Usando as branches    
+
+                            -- git branch <nome-da-branch>
+
+                        git status
+                        O comando git status nos dá todas as informações necessárias sobre a branch atual.
+
+                            -- git status
+
+                        git add
+                        Ao criarmos, modificarmos ou excluirmos um arquivo, essas alterações acontecerão em nosso espaço de trabalho local e não serão incluídas no próximo commit (a menos que alteremos as configurações).
+                        Precisamos usar o comando git add para incluir as alterações de um ou vários arquivos em nosso próximo commit.
+
+                            Para adicionar um único arquivo:
+
+                                -- git add <arquivo>
+
+                            Para adicionar tudo ao mesmo tempo:
+
+                                -- git add -A
+
+                        git commit
+                        Talvez esse seja o comando mais usado do Git. Quando chegamos a determinado ponto em desenvolvimento, queremos salvar nossas alterações (talvez após uma tarefa ou resolução de problema específica).
+                        Git commit é como definir um ponto de verificação no processo de desenvolvimento. Você pode voltar a esse ponto mais tarde, se necessário.
+                        Também precisamos escrever uma mensagem breve para explicar o que desenvolvemos ou alteramos no código-fonte.
+
+                            -- git commit -m "mensagem do commit"
+
+                        git push
+                        Após fazer o commit de suas alterações, a próxima coisa a fazer é enviar suas alterações ao servidor remoto. Git push faz o upload dos seus commits no repositório remoto.
+
+                            -- git push <repositório-remoto> <nome-da-branch>
+
+                            branch recem criada
+
+                            -- git push --set-upstream <repositório-remoto> <nome-da-branch>
+                            ou
+                            -- git push -u origin <nome-da-branch>
+
+
+                        git pull
+                        O comando git pull é usado para obter as atualizações de um repositório remoto. Esse comando é uma combinação de git fetch e git merge,
+                        o que significa que,quando usamos git pull, ele recebe as atualizações do repositório remoto (git fetch) e aplica imediatamente 
+                        as alterações mais recentes em seu espaço de trabalho local (git merge).
+
+                        -- git pull <repositório-remoto> 
+
