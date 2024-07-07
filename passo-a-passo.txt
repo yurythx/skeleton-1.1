@@ -222,6 +222,9 @@ Criando o projeto
 
         python manage.py runserver  
 
+        crindo apps no projeto
+        -- python manage.py startapp base
+
     CORS
 
         Instalando o cors
