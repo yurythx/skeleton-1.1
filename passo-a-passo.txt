@@ -8,6 +8,14 @@ primeiro atualizar o pip pra versão mais atualizar
 
     -- python.exe -m pip install --upgrade pip
 
+     Instalar os seguintes pacotes Iniciais.
+
+            pip install django
+            pip install pillow
+            Para criar o arquivo requirements.txt
+
+            pip freeze > requirements.txt
+
 
 Ambiente Virtual
 
@@ -45,6 +53,16 @@ Ambiente Virtual
 
             -- python -m venv meu_projeto  
 
+        
+            ## Windows
+            python -m venv .venv
+            source .venv/Scripts/activate # Ativar ambiente
+
+            ## Linux 
+            ## Caso não tenha virtualenv. "pip install virtualenv"
+            virtualenv .venv
+            source .venv/bin/activate # Ativar ambiente
+        
 
 Django
 
@@ -74,109 +92,261 @@ Django
 
         -- python manage.py startapp blog
 
+Intalando variaveis de ambiente
 
-GIT
+    -- pip install python-dotenv
 
-        Comandos basicos GIT
+    Criar arquivo na raiz chamado .env (sem extenção)
 
-            git help add
-            git help commit
-            git help <qualquer_comando_git>
+        dentro dele colocar e preencher as variaveis de ambiente segue abaixo um modelo
 
-            Setar usuário
-                git config --global user.name "Yurii Menezes"
+            Exemplo:
 
-            Setar email
-                git config --global user.email yurythx@gmail.com
+            ## Não precisa colocar "" aspas
+            SECRET_KEY=django-insecure-q(ge$586x7o9n)3w+6d_^t(m!ib&9%_m8&6@=m=sy@^7qf)#*_
+            DEBUG=True
+            SUPER_USER=ADMIN
+            EMAIL=yurythx@gmail.com
 
-            Criar novo repositório
-                git init
+            NAME_DB=db.sqlite3
+            USER_DB=root
+            PASSWORD_DB=
+            HOST_DB=localhost
+            PORT_DB=3306
 
-            Verificar estado dos arquivos/diretórios
-                git status
+            EMAIL_HOST=smtp.office365.com
+            EMAIL_HOST_USER=email@hotmail.com
+            EMAIL_HOST_PASSWORD=sua_senha
+            EMAIL_PORT=587 
+            EMAIL_USE_TLS=True 
+            DEFAULT_FROM_EMAIL=email@hotmail.com
+            SERVER_EMAIL=DEFAULT_FROM_EMAIL
+
+
+            Configuração no core/settings.py
+
+            Nota que para chamar uma variavel no arquivo .env basta chamar a biblioteca os.getenv('NAME_DB') e NAME_DB é nome da variavel que está no arquivo.
+
+            # importar a biblioteca
+            import os
+            import sys
+            from dotenv import load_dotenv
+
+            # Adicionar essa tag para que nosso projeto encontre o .env
+            load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+            # Diz para Django onde estão nossos aplicativos
+            APPS_DIR = str(os.path.join(BASE_DIR,'apps'))
+            sys.path.insert(0, APPS_DIR)
+
+            # Chamar as variaveis assim
+            SECRET_KEY = os.getenv("SECRET_KEY")
+
+            # DEBUG
+            DEBUG = os.getenv('DEBUG')
+
+            # Aplicativos do django
+            DJANGO_APPS = [
+                'django.contrib.admin',
+                'django.contrib.auth',
+                'django.contrib.contenttypes',
+                'django.contrib.sessions',
+                'django.contrib.messages',
+                'django.contrib.staticfiles',
+            ]
+            THIRD_APPS = [
+                ...
+            ]
+            PROJECT_APPS = [
+                'apps.base',
+                'apps.myapp',
+            ]
+            INSTALLED_APPS = DJANGO_APPS + THIRD_APPS + PROJECT_APPS
+
+            # Banco de Dados.
+            DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, os.getenv('NAME_DB')),
+                        #'USER':os.getenv('USER_DB')
+                        #'PASSWORD': os.getenv('PASSWORD_DB')
+                        #'HOST':os.getenv('HOST_DB')
+                        #'PORT':os.getenv('PORT_DB')
+
+                }
+            }
+
+            # Se tiver configuração de email
+            EMAIL_HOST = os.getenv('EMAIL_HOST')
+            EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+            EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
+            EMAIL_PORT = os.getenv('EMAIL_PORT') 
+            EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') 
+            DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+            SERVER_EMAIL = DEFAULT_FROM_EMAIL
+            GIT
+
+                    Comandos basicos GIT
+
+
+                        Setar usuário
+                            git config --global user.name "Yurii Menezes"
+
+                        Setar email
+                            git config --global user.email yurythx@gmail.com
+
+                        Criar novo repositório
+                            git init
+
+                        Verificar estado dos arquivos/diretórios
+                            git status
+
+                        Adicionar todos os arquivos/diretórios
+                            git add .
+
+                        Comitar informando mensagem
+                            git commit meuarquivo.txt -m "minha mensagem de commit"
+
+                        git push <nome do repositório> <nome da branch>
+                        git push origin master
+                        git push --all
+
+Criando o projeto
+
             
-            Adicionar um arquivo em específico
-                git add meu_arquivo.txt
+        django-admin startproject core .
 
-            Adicionar um diretório em específico
-                git add meu_diretorio
+        “core” é nome do seu projeto e quando colocamos um “.” depois do nome do projeto significa que é para criar os arquivos na raiz da pasta. Assim não cria subpasta do projeto.
 
-            Adicionar todos os arquivos/diretórios
-                git add .
+        Testar a aplicação
 
-            Comitar um arquivo
-                git commit -m "minha mensagem de commit"
+        python manage.py runserver  
 
-            Comitar vários arquivos
-                git commit meu_arquivo.txt meu_outro_arquivo.txt
+    CORS
 
-            Comitar informando mensagem
-                git commit meuarquivo.txt -m "minha mensagem de commit"
+        Instalando o cors
 
-            git push <nome do repositório> <nome da branch>
-            git push origin master
-            git push --all
+         -- pip install django-cors-headers 
 
-            Remover arquivo
-                git rm meu_arquivo.txt
+         configuração do cors
 
-            Remover diretório
-                git rm -r diretorio
+        importando no admin o cors
 
+         from corsheaders.defaults import default_headers
 
-        Comandos explicados
+                        # Adicionar no settings.py
+                        INSTALLED_APPS = [
+                            ...,
+                            "corsheaders",
+                            ...,
+                        ]
+                        MIDDLEWARE = [
+                            ...,
+                            "corsheaders.middleware.CorsMiddleware",
+                                "django.middleware.common.CommonMiddleware",
+                            ...,
+                        ]
+                        ALLOWED_HOSTS = [ 
+                                'localhost', 
+                                '127.0.0.1',  
+                        ]
 
+                        CORS_ALLOW_HEADERS = list(default_headers) + [
+                                'X-Register',
+                        ]
 
-                        git clone
-                        Git clone é uma comando para baixar o código-fonte existente de um repositório remoto (como, por exemplo, o Github).
+                        # CORS Config
+                        CORS_ORIGIN_ALLOW_ALL = True  
+                        # CORS_ORIGIN_ALLOW_ALL como True, o que permite que qualquer site acesse seus recursos.
+                        # Defina como False e adicione o site no CORS_ORIGIN_WHITELIST onde somente o site da lista acesse os seus recursos.
 
-                            -- git clone https://github.com/yurythx/Projeto_Prometheus.git
+                        CORS_ALLOW_CREDENTIALS = False 
 
-                        git branch
-                        Branches (algo como ramificações, em português) são altamente importantes no mundo do git. Usando as branches    
+                        CORS_ORIGIN_WHITELIST = ['http://meusite.com',] # Lista. 
 
-                            -- git branch <nome-da-branch>
+                                
+                        if not DEBUG: verifica se a aplicação está sendo executada em modo de depuração (DEBUG=True). Se DEBUG for False, isso significa que a aplicação está sendo executada em um ambiente de produção, portanto, as configurações de segurança devem ser aplicadas.
 
-                        git status
-                        O comando git status nos dá todas as informações necessárias sobre a branch atual.
+                        SECURE_SSL_REDIRECT direciona todas as solicitações HTTP para HTTPS.
 
-                            -- git status
+                        ADMINS é uma lista de tuplas que contêm informações sobre os administradores do site. Se ocorrer um erro no site, um email será enviado para os endereços listados em ADMINS.
 
-                        git add
-                        Ao criarmos, modificarmos ou excluirmos um arquivo, essas alterações acontecerão em nosso espaço de trabalho local e não serão incluídas no próximo commit (a menos que alteremos as configurações).
-                        Precisamos usar o comando git add para incluir as alterações de um ou vários arquivos em nosso próximo commit.
+                        SESSION_COOKIE_SECURE garante que os cookies de sessão sejam definidos apenas em conexões HTTPS.
 
-                            Para adicionar um único arquivo:
+                        CSRF_COOKIE_SECURE garante que os cookies CSRF sejam definidos apenas em conexões HTTPS.
 
-                                -- git add <arquivo>
+                        Essas configurações ajudam a proteger a aplicação contra ataques de interceptação e garantem que as informações confidenciais do usuário sejam mantidas seguras.
 
-                            Para adicionar tudo ao mesmo tempo:
+                        Com essas configurações, você permitirá que o site "http://meusite.com" acesse seus recursos. É importante lembrar que, para que isso funcione, o site que está acessando seus recursos também deve ter a configuração CORS correta.        
+                                                            
 
-                                -- git add -A
+    Logs
 
-                        git commit
-                        Talvez esse seja o comando mais usado do Git. Quando chegamos a determinado ponto em desenvolvimento, queremos salvar nossas alterações (talvez após uma tarefa ou resolução de problema específica).
-                        Git commit é como definir um ponto de verificação no processo de desenvolvimento. Você pode voltar a esse ponto mais tarde, se necessário.
-                        Também precisamos escrever uma mensagem breve para explicar o que desenvolvemos ou alteramos no código-fonte.
+        instalando django-requestlogs
 
-                            -- git commit -m "mensagem do commit"
-
-                        git push
-                        Após fazer o commit de suas alterações, a próxima coisa a fazer é enviar suas alterações ao servidor remoto. Git push faz o upload dos seus commits no repositório remoto.
-
-                            -- git push <repositório-remoto> <nome-da-branch>
-
-                            branch recem criada
-
-                            -- git push --set-upstream <repositório-remoto> <nome-da-branch>
-                            ou
-                            -- git push -u origin <nome-da-branch>
+        -- pip install django-requestlogs        
 
 
-                        git pull
-                        O comando git pull é usado para obter as atualizações de um repositório remoto. Esse comando é uma combinação de git fetch e git merge,
-                        o que significa que,quando usamos git pull, ele recebe as atualizações do repositório remoto (git fetch) e aplica imediatamente 
-                        as alterações mais recentes em seu espaço de trabalho local (git merge).
+        Adicionar no core/settings.py
 
-                        -- git pull <repositório-remoto> 
+        MIDDLEWARE = [
+            ...
+            'requestlogs.middleware.RequestLogsMiddleware',
+        ]
+        REST_FRAMEWORK={
+            ...
+            'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
+        }
+        Documentação: https://docs.djangoproject.com/en/4.1/topics/logging/#topic-logging-parts-loggers
 
+        # Logs
+        LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                'requestlogs_to_file': {
+                    'level': 'INFO',
+                    'class': 'logging.FileHandler',
+                    'filename': 'info.log',
+                },
+            },
+            'loggers': {
+                'requestlogs': {
+                    'handlers': ['requestlogs_to_file'],
+                    'level': 'INFO',
+                    'propagate': False,
+                },
+            },
+        }
+
+        REQUESTLOGS = {
+            'SECRETS': ['password', 'token'],
+            'METHODS': ('PUT', 'PATCH', 'POST', 'DELETE'),
+        }
+        No primeiro bloco de código, LOGGING, estão sendo definidos os parâmetros do logger de informações para as requisições, que será gravado em um arquivo chamado info.log.
+
+        No segundo bloco, REQUESTLOGS, estão sendo definidas as opções de gravação de logs para as requisições, como as informações que devem ser ocultadas e quais métodos HTTP devem ser registrados. exemplo senhas, token de cliente/sistema.
+
+        Quando precisamos gerar log em alguma rota, script qualquer função em expecifico podemos chamar essa biblioteca logger e receber as informações no arquivo de .log que configuramos.
+
+        Por exemplo. Na view podemos fazer um tratamento assim, cria uma Exception para tratar os erros e enviar para nosso arquivo de log.
+
+        import logging
+
+        error_logger = logging.getLogger()
+
+        def sendmail(data):
+            ...
+
+        ...
+            try:
+                data = response.data
+                sendmail(data)
+            except Exception as e: 
+                error_logger.error(str(e) + "|" + str(data))
+        ...
+        Outro detalhe, em produção o arquivo info.log quando voce criar ele no linux precisa ter permissões.
+
+        sudo chmod -R 777 path/info.log
+
+        
