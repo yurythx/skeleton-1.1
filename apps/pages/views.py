@@ -1,7 +1,20 @@
 
 from django.shortcuts import render
+from django.contrib import messages
 
 
 # Create your views here.
-def index(request):
+def index_pages(request):
+    
+    context ={
+        'message': messages.debug(request, 'Esta é uma mensagem de debug!'),
+        'message': messages.info(request, 'Esta é uma mensagem de informaçãp!'),
+        'message': messages.success(request, 'Esta é uma mensagem de sucesso!'),
+        'message': messages.warning(request, 'Esta é uma mensagem de Perigo!'),
+        'message': messages.error(request, 'Esta é uma mensagem de erro!')
+           
+        
+    }
+    
+    
     return render(request, 'index.html')
