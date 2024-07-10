@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'base_auth.html' %}
 {% block title %}Login{% endblock %}
-{% block content %} 
+{% block content_auth %}
 <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
     <h4>Login</h4>
@@ -17,5 +17,6 @@
         <span>Ainda não tem conta? <a class="text-reset" href="#">Cadastre-se</a></span><br>
         <span>Esqueceu sua senha? <a class="text-reset" href="#">Resetar</a></span>
     </div>  
+    <span>Ainda não tem conta? <a class="text-reset" href="{% url 'register' %}">Cadastre-se</a></span><br>
 </form>   
 {% endblock %}

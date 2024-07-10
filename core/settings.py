@@ -171,6 +171,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "contas.MyUser"
 # Logs
 LOGGING = {
     'version': 1,
