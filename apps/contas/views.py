@@ -1,9 +1,23 @@
 from email.headerregistry import Group
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 
-from apps.contas.forms import CustomUserCreationForm
+from apps.contas.forms import CustomUserCreationForm, UserChangeForm
+from django.contrib.auth.decorators import login_required
+
+
+from django.shortcuts import get_object_or_404
+from apps.contas.permissions import grupo_colaborador_required
+from contas.models import MyUser
+
+
+def timeout_view(request):
+    return render(request, 'timeout.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
 
 def login_view(request):
     if request.method == 'POST':
@@ -19,8 +33,9 @@ def login_view(request):
         return redirect('home')
     return render(request, 'login.html')
 
-
 def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -28,12 +43,8 @@ def register_view(request):
             usuario.is_valid = False
             usuario.save()
             
-            usuario = form.save(commit=False)
-            usuario.is_valid = False
-            usuario.save()
-
-            group = Group.objects.get(name='usuario')
-            usuario.groups.add(group)
+            ##group = Group.objects.get(name='usuario')
+            ##usuario.groups.add(group)
             
             messages.success(request, 'Registrado. Agora faça o login para começar!')
             return redirect('login')
@@ -42,4 +53,35 @@ def register_view(request):
             messages.error(request, 'A senha deve ter pelo menos 1 caractere maiúsculo, \
                 1 caractere especial e no minimo 8 caracteres.')
     form = CustomUserCreationForm()
-    return render(request, "register.html",{"form": form})
+    return render(request, "registration/register.html",{"form": form})
+
+@login_required()
+@grupo_colaborador_required(['administrador','colaborador'])
+
+def atualizar_usuario(request, user_id):
+    user = get_object_or_404(MyUser, pk=user_id)
+    if request.method == 'POST':
+        form = UserChangeForm(request.POST, instance=user, user=request.user)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'O perfil de usuário foi atualizado com sucesso!')
+            return redirect('home')
+    else:
+        form = UserChangeForm(request.POST, instance=user, user=request.user)
+    return render(request, 'user_update.html', {'form': form})
+
+@login_required()
+@grupo_colaborador_required(['administrador','colaborador'])
+
+def atualizar_meu_usuario(request):
+    if request.method == 'POST':
+        form = UserChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Seu perfil foi atualizado com sucesso!')
+            return redirect('home')
+    else:
+        form = UserChangeForm(request.POST, instance=user, user=request.user)
+        
+    return render(request, 'user_update.html', {'form': form})

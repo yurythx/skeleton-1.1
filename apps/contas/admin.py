@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-#from contas.forms import UserCreationForm
+from contas.forms import UserCreationForm
 from contas.models import MyUser
 
 class MyUserAdmin(UserAdmin):
-    #add_form = UserCreationForm
+    add_form = UserCreationForm
     model = MyUser
     list_display = ('email', 'first_name', 'last_name', 'is_active', 'is_staff')
     list_filter = ('is_active', 'is_staff')

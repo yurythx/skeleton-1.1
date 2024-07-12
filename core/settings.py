@@ -71,6 +71,7 @@ if not DEBUG:
 
 # Aplicativos do django
 DJANGO_APPS = [
+    'apps.contas', 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -86,7 +87,7 @@ PROJECT_APPS = [
     
     'apps.base', 
     'apps.pages', 
-    'apps.contas', 
+    'apps.perfil', 
     
 ]
 
@@ -247,6 +248,7 @@ MEDIA_URL = '/media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Se tiver configuração de email
 EMAIL_HOST = os.getenv('EMAIL_HOST')

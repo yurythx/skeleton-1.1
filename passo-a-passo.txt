@@ -213,6 +213,7 @@ Intalando variaveis de ambiente
 
 Criando o projeto
 
+
             
         django-admin startproject core .
 
@@ -224,6 +225,8 @@ Criando o projeto
 
         crindo apps no projeto
         -- python manage.py startapp base
+
+APPS DE TERCEIROS
 
     CORS
 
@@ -280,8 +283,7 @@ Criando o projeto
 
                         Essas configurações ajudam a proteger a aplicação contra ataques de interceptação e garantem que as informações confidenciais do usuário sejam mantidas seguras.
 
-                        Com essas configurações, você permitirá que o site "http://meusite.com" acesse seus recursos. É importante lembrar que, para que isso funcione, o site que está acessando seus recursos também deve ter a configuração CORS correta.        
-                                                            
+                        Com essas configurações, você permitirá que o site "http://meusite.com" acesse seus recursos. É importante lembrar que, para que isso funcione, o site que está acessando seus recursos também deve ter a configuração CORS correta.                                                              
 
     Logs
 
@@ -398,3 +400,6 @@ Criando o projeto
             e no settings atualizar a rota de redirecionamento.
 
             SESSION_TIMEOUT_REDIRECT = 'http://localhost:8000/contas/desconectado-inatividade/'     
+
+
+          
