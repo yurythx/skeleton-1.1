@@ -88,6 +88,7 @@ PROJECT_APPS = [
     'apps.base', 
     'apps.pages', 
     'apps.perfil', 
+    'apps.config',
     
 ]
 

@@ -1,4 +1,4 @@
-from email.headerregistry import Group
+from django.contrib.auth.models import Group, User 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import get_object_or_404
 from apps.contas.permissions import grupo_colaborador_required
+from perfil.models import Perfil
 from contas.models import MyUser
 
 
@@ -43,8 +44,10 @@ def register_view(request):
             usuario.is_valid = False
             usuario.save()
             
-            ##group = Group.objects.get(name='usuario')
-            ##usuario.groups.add(group)
+            group = Group.objects.get(name='usuario')
+            usuario.groups.add(group)
+            
+            Perfil.objects.create(usuario=usuario) # Cria instancia perfil do usuário
             
             messages.success(request, 'Registrado. Agora faça o login para começar!')
             return redirect('login')
@@ -58,8 +61,8 @@ def register_view(request):
 @login_required()
 @grupo_colaborador_required(['administrador','colaborador'])
 
-def atualizar_usuario(request, user_id):
-    user = get_object_or_404(MyUser, pk=user_id)
+def atualizar_usuario(request, username):
+    user = get_object_or_404(MyUser, username=username)
     if request.method == 'POST':
         form = UserChangeForm(request.POST, instance=user, user=request.user)
         
