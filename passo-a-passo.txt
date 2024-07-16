@@ -402,4 +402,11 @@ APPS DE TERCEIROS
             SESSION_TIMEOUT_REDIRECT = 'http://localhost:8000/contas/desconectado-inatividade/'     
 
 
-          
+pra fazer botão sumir se usuario não estiver logado com as permissoes corretas
+
+{% if perms.contas.view_myuser %}
+
+<button type="button" class="btn btn-light" onclick="location.href='{% url 'lista_usuarios' %}'">
+                <i class="fas fa-users me-2"></i>Usuários do Sistema</button>
+
+{% endif %}          

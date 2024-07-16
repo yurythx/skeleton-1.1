@@ -1,7 +1,11 @@
 from django import forms
+import random # escolha aleatoria
+import string # contem todas as letras do alfabeto, etc.
+from django.core.mail import send_mail
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from contas.models import MyUser 
+from contas.models import MyUser
+from core import settings 
 
 class UserChangeForm(forms.ModelForm):
     class Meta:
@@ -28,7 +32,7 @@ class UserChangeForm(forms.ModelForm):
                     else:
                         field.widget.attrs['class'] = 'form-control'
                 
-class CustomUserCreationForm(UserCreationForm):
+class CustomUserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Senha", widget=forms.PasswordInput) 
     password2 = forms.CharField(label="Confirmação de Senha", widget=forms.PasswordInput)
 
@@ -43,8 +47,14 @@ class CustomUserCreationForm(UserCreationForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        
         super(CustomUserCreationForm, self).__init__(*args, **kwargs)
         
+        if self.user.is_authenticated:
+            del self.fields['password1']
+            del self.fields['password2']
+            
         for field_name, field in self.fields.items():
             if field.widget.__class__ in [forms.CheckboxInput, forms.RadioSelect]:
                 field.widget.attrs['class'] = 'form-check-input'
@@ -59,12 +69,26 @@ class CustomUserCreationForm(UserCreationForm):
             raise ValidationError("Senha não estão iguais!")
         return password2
 
+    
     def save(self, commit=True):
-        # Save the provided password in hashed format
+       # Save the provided password in hashed format
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password1"])
+        if self.user.is_authenticated:
+            password = ''.join(random.choices(string.digits, k=6)) # Gerar uma senha 
+            user.set_password(password) # salvo essa senha
+            user.force_change_password = True # força mudança de senha quando logar.
+            send_mail( # Envia email para usuario
+                'Sua senha provisória',
+                f'Sua senha provisório para entrar na plataforma é: {password}',
+                settings.DEFAULT_FROM_EMAIL, # De (em produção usar o e-mail que está no settings: settings.DEFAULT_FROM_EMAIL)
+                [user.email], # para
+                fail_silently=False,
+            )
+        else:
+            user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
         return user
+ 
     
     
