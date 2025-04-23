@@ -1,33 +1,39 @@
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect
-from apps.contas.forms import CustomUserCreationForm, UserChangeForm
-
+from django import template
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template import loader
+from django.urls import reverse
 
 
-from django.shortcuts import get_object_or_404
-from apps.contas.permissions import grupo_colaborador_required
-from contas.models import MyUser
+@login_required(login_url="/login/")
+def index(request):
+    context = {'segment': 'index'}
 
-from email.headerregistry import Group
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render, redirect
+    html_template = loader.get_template('pages/index.html')
+    return HttpResponse(html_template.render(context, request))
 
 
-def index_pages(request):
-    
-   ## context ={
-   ##     'message': messages.info(request, 'Esta é uma mensagem de informaçãp!'),
-   ##     'message': messages.success(request, 'Esta é uma mensagem de sucesso!'),
-   ##     'message': messages.warning(request, 'Esta é uma mensagem de Perigo!'),
-   ##     'message': messages.error(request, 'Esta é uma mensagem de erro!')
-           
-        
-   ## }
-    
-    
-    return render(request, 'index.html')
+@login_required(login_url="/login/")
+def pages(request):
+    context = {}
+    # All resource paths end in .html.
+    # Pick out the html file name from the url. And load that template.
+    try:
 
+        load_template = request.path.split('/')[-1]
 
+        if load_template == 'admin':
+            return HttpResponseRedirect(reverse('admin:index'))
+        context['segment'] = load_template
+
+        html_template = loader.get_template('pages/' + load_template)
+        return HttpResponse(html_template.render(context, request))
+
+    except template.TemplateDoesNotExist:
+
+        html_template = loader.get_template('pages/page-404.html')
+        return HttpResponse(html_template.render(context, request))
+
+    #except:
+    #    html_template = loader.get_template('home/page-500.html')
+    #    return HttpResponse(html_template.render(context, request))

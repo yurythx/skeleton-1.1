@@ -1,0 +1,15 @@
+<!-- cidades/includes/confirm_delete.html -->
+<form method="post" class="ajax-form" data-url="{% url 'cidades:deletar_cidade' slug=cidade.slug %}">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h5 class="modal-title">Confirmar exclusão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <p>Tem certeza que deseja excluir <strong>{{ cidade.nome }}</strong>?</p>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-danger">Sim, excluir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    </div>
+</form>

@@ -1,10 +1,12 @@
 
 
-from django.urls import path 
-from pages import views
+from django.urls import path, re_path
+from apps.pages import views
 
 urlpatterns = [
-    path('', views.index_pages, name='home'), 
+
+    # The home page
+    path('', views.index, name='pages'),
+
+   
 ]
-
-

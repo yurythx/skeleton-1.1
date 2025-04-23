@@ -1,7 +1,12 @@
-from django.urls import path 
-from config import views
+
+
+from django.urls import path, re_path
+from apps.pages import views
 
 urlpatterns = [
-    path('', views.painel_view, name='painel'), 
-    path('configuracao/', views.configuracao_view, name='configuracao'),
+
+    # The home page
+    path('config', views.index, name='config'),
+
+   
 ]

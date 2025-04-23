@@ -1,10 +1,9 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-@login_required
-def painel_view(request):
-    return render(request, 'painel.html')
+# Create your views here.
 
-@login_required
-def configuracao_view(request):
-    return render(request, 'configuracao.html')
+def index(request):
+    context = {'segment': 'index'}
+
+    html_template = loader.get_template('home/index.html')
+    return HttpResponse(html_template.render(context, request))

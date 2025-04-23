@@ -1,274 +1,242 @@
-
-
-# importar a biblioteca
 import os
-import sys
 from dotenv import load_dotenv
-from pathlib import Path
+import mysql.connector
+from mysql.connector import Error
+import logging
 
-from corsheaders.defaults import default_headers
+# Carrega as variáveis do arquivo .env
+load_dotenv()
 
-
-# base_dir config -->> definindo aonde buscar os templetes e os arquivos estaticos(STATIC)
+# Caminhos base
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_DIR = os.path.join(BASE_DIR,'templates')
-STATIC_DIR=os.path.join(BASE_DIR,'static')
+CORE_DIR = BASE_DIR  # Usando BASE_DIR diretamente para evitar redundância
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-#BASE_DIR = Path(__file__).resolve().parent.parent # --> linha do base_dir original
+# SECRET_KEY e DEBUG
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("A chave SECRET_KEY é necessária no arquivo .env")
 
+DEBUG = os.getenv('DEBUG', 'True') == 'True'  # Converte de string para booleano
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# Hosts
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+if not ALLOWED_HOSTS:
+    raise ValueError("ALLOWED_HOSTS não está configurado corretamente.")
 
+# Assets
+ASSETS_ROOT = os.getenv('ASSETS_ROOT', '/static/')
 
-# Adicionar essa tag para que nosso projeto encontre o .env
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+# Função para testar conexão MySQL
+def test_mysql_connection():
+    """Tenta se conectar ao MySQL e retorna True se bem-sucedido"""
+    connection = None  # Inicializa a variável connection antes do bloco try
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            database=os.getenv('DB_NAME', 'appseed_db'),
+            user=os.getenv('DB_USERNAME', 'appseed_db_usr'),
+            password=os.getenv('DB_PASS', 'pass'),
+            port=int(os.getenv('DB_PORT', 3306))
+        )
+        if connection.is_connected():
+            print("Conexão com MySQL bem-sucedida.")
+            return True
+    except Error as e:
+        print(f"Erro ao conectar ao MySQL: {e}")
+        return False
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
-# Diz para Django onde estão nossos aplicativos
-APPS_DIR = str(os.path.join(BASE_DIR,'apps'))
-sys.path.insert(0, APPS_DIR)
+# Função para configurar o banco de dados
+def setup_database():
+    """Configura o banco de dados com base na variável de ambiente DB_ENGINE"""
+    db_engine = os.getenv('DB_ENGINE', 'mysql')
 
-# Chamar as variaveis assim
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-# SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = 'django-insecure-&^2pt7*qa(hbi^9@$3d(+6b!t1@q2el$@izd6^c_*^h^mo$*y^'
-
-# DEBUG
-DEBUG = os.getenv('DEBUG')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = True
-
-ALLOWED_HOSTS = [ 
-		'localhost', 
-		'127.0.0.1',  
-]
-
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    	'X-Register',
-]
-
-
-# CORS Config
-CORS_ORIGIN_ALLOW_ALL = True  
-# CORS_ORIGIN_ALLOW_ALL como True, o que permite que qualquer site acesse seus recursos.
-# Defina como False e adicione o site no CORS_ORIGIN_WHITELIST onde somente o site da lista acesse os seus recursos.
-
-CORS_ALLOW_CREDENTIALS = False 
-
-CORS_ORIGIN_WHITELIST = ['http://meusite.com',] # Lista.
-
-
-if not DEBUG:
-	SECURE_SSL_REDIRECT = True
-	ADMINS = [(os.getenv('SUPER_USER'), os.getenv('EMAIL'))]
-	SESSION_COOKIE_SECURE = True
-	CSRF_COOKIE_SECURE = True 
-
-# Application definition
-
-# Aplicativos do django
-DJANGO_APPS = [
-    'apps.contas', 
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-]
-THIRD_APPS = [
+    if db_engine == 'mysql' and test_mysql_connection():
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': os.getenv('DB_NAME', 'appseed_db'),
+                'USER': os.getenv('DB_USERNAME', 'appseed_db_usr'),
+                'PASSWORD': os.getenv('DB_PASS', 'pass'),
+                'HOST': os.getenv('DB_HOST', 'localhost'),
+                'PORT': os.getenv('DB_PORT', 3306),
+            }
+        }
+    else:
+        # Se a conexão com MySQL falhar ou o DB_ENGINE for outro, use SQLite
+        print("Falha ao conectar ao MySQL, configurando o banco de dados SQLite...")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, os.getenv('SQLITE_DB_PATH', 'db.sqlite3')),
+            }
+        }
     
-    "corsheaders",
-]
-PROJECT_APPS = [
-    
-    'apps.base', 
-    'apps.pages', 
-    'apps.perfil', 
-    'apps.config',
-    
-]
+    return DATABASES
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_APPS + PROJECT_APPS
+# Banco de dados (MySQL ou SQLite)
+DATABASES = setup_database()
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django_session_timeout.middleware.SessionTimeoutMiddleware', # Time Out
-     "corsheaders.middleware.CorsMiddleware", # CORS
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'requestlogs.middleware.RequestLogsMiddleware', # logs
+# Validação de senhas
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-ROOT_URLCONF = 'core.urls'
+# Internacionalização
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
+LANGUAGES = [
+    ('en', 'English'),
+    ('pt', 'Portuguese'),
+]
+
+# Arquivos estáticos
+STATIC_ROOT = os.path.join(CORE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(CORE_DIR, 'apps/static')]
+
+# Arquivos de mídia (caso use uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(CORE_DIR, 'apps/media')
+
+# Crispy Forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
+
+# TinyMCE
+TINYMCE_DEFAULT_CONFIG = {
+    'height': 500,
+    'menubar': False,
+    'plugins': [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'codesample', 'print',
+        'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'textcolor', 'paste', 'help', 'wordcount'
+    ],
+    'toolbar': 'undo redo | bold italic | alignleft aligncenter alignright | '
+               'bullist numlist | link image media | code | fullscreen preview | '
+               'wordcount | help',
+    'contextmenu': 'formats | link image',
+    'statusbar': True,
+    'content_style': 'body { font-family: Helvetica, Arial, sans-serif; font-size: 14px; }',
+}
+
+# Modelo de usuário customizado
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Redirecionamento após login/logout
+LOGIN_REDIRECT_URL = "pages"
+LOGOUT_REDIRECT_URL = "pages"
+
+# Diretório de templates global (base.html, etc.)
+TEMPLATE_DIR = os.path.join(CORE_DIR, "templates")
+
+# Configuração de templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [TEMPLATE_DIR],       # Diretório global
+        'APP_DIRS': True,             # Templates por app (ex: apps/clientes/templates/clientes/)
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # Apps
-                'base.context_processors.context_social', 
+                'apps.context_processors.cfg_assets_root',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+# Apps instalados
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
 
+    # Terceiros
+    'widget_tweaks',
+    'tinymce',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'axes',
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# Banco de Dados.
-DATABASES = {
-  'default': {
-      'ENGINE': 'django.db.backends.sqlite3',
-      'NAME': os.path.join(BASE_DIR, os.getenv('NAME_DB')),
-			#'USER':os.getenv('USER_DB')
-			#'PASSWORD': os.getenv('PASSWORD_DB')
-			#'HOST':os.getenv('HOST_DB')
-			#'PORT':os.getenv('PORT_DB')
-
-	}
-}
-
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    # Seus apps
+    'apps.accounts',
+    'apps.pages',
+    'apps.config',
+    'apps.articles',
+    'apps.clientes',
+    'apps.fornecedores',
+    'apps.enderecos',
+    'apps.produtos',
 ]
 
-AUTH_USER_MODEL = "contas.MyUser"
-# Logs
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'requestlogs_to_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'info.log',
-        },
-    },
-    'loggers': {
-        'requestlogs': {
-            'handlers': ['requestlogs_to_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
+# Middleware
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+    'apps.accounts.middleware.AxesRedirectMiddleware',  # ← Ativar isso aqui
+    
+]
 
-REQUESTLOGS = {
-    'SECRETS': ['password', 'token'],
-    'METHODS': ('PUT', 'PATCH', 'POST', 'DELETE'),
-}
+# Arquivo de template que será exibido para erro 403
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
-# timeout tempo de inatividate no sistema
-SESSION_EXPIRE_SECONDS = 1800 # 30minutos
-SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
-#SESSION_EXPIRE_AFTER_LAST_ACTIVITY_GRACE_PERIOD = 60  
-SESSION_TIMEOUT_REDIRECT = 'http://localhost:8000/contas/timeout/'
+# Segurança adicional
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+CSRF_COOKIE_SECURE = True  # Só envia o cookie via HTTPS
+SESSION_COOKIE_SECURE = True  # Só envia o cookie via HTTPS
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+# Define o número máximo de tentativas de login falhadas antes de bloquear o usuário
+AXES_FAILURE_LIMIT = 5
 
-REST_FRAMEWORK={
-   
-    'EXCEPTION_HANDLER': 'requestlogs.views.exception_handler',
-}
+# Define o período de tempo em que as tentativas de login falhadas são registradas (em segundos)
+AXES_COOLOFF_TIME = 1 * 60  # 1 minuto
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+# Expirando o bloqueio após X minutos de inatividade
+AXES_LOCK_OUT_AT_FAILURE = True  # Ativa o bloqueio de usuário após tentativas de login falhas
 
-LANGUAGE_CODE = 'pt-br'
+# Enviar emails de alerta quando um IP é bloqueado ou um usuário
+AXES_EMAIL_ALERTS = True
 
-TIME_ZONE = 'America/Sao_Paulo'
+#
 
-USE_I18N = True
+# URLs e WSGI
+ROOT_URLCONF = 'core.urls'
+WSGI_APPLICATION = 'core.wsgi.application'
 
-USE_TZ = True
+# Arquivos estáticos
+STATIC_ROOT = os.path.join(CORE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
-AUTH_USER_MODEL = "contas.MyUser"
-
-STATIC_ROOT = os.path.join(BASE_DIR,'static')
-STATIC_URL = '/static/' 
-
-# STATICFILES_DIRS = [ # talvez em Produção podesse usar assim.
-#     BASE_DIR / 'static',
-# ]
-
-MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+# Arquivos de mídia
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(CORE_DIR, 'media')
 
-#STATIC_URL = 'static/' #linha original indicando onde estão os arquivos estaticos
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Se tiver configuração de email
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
-EMAIL_PORT = os.getenv('EMAIL_PORT') 
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
-
-
-# --- Messages --- #
-
-from django.contrib.messages import constants
-
-MESSAGE_TAGS = {
-	constants.ERROR: 'alert-danger',
-	constants.WARNING: 'alert-warning',
-	constants.DEBUG: 'alert-danger',
-	constants.SUCCESS: 'alert-success',
-	constants.INFO: 'alert-info',
-}
+# Configuração de backends de autenticação para django-axes
+AUTHENTICATION_BACKENDS = (
+    'axes.backends.AxesStandaloneBackend',  # Backend de autenticação do django-axes
+    'django.contrib.auth.backends.ModelBackend',  # Backend padrão do Django
+)

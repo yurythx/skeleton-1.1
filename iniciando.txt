@@ -1,0 +1,78 @@
+Ambiente Virtual
+
+        Criando ambiente virtual
+
+            -- python -m venv meu_ambiente_virtual
+
+        ativando ambiente virtual
+
+        No Windows:
+
+            -- meu_ambiente_virtual\Scripts\activate
+			
+			-- pip install -r requirements.txt
+
+
+        caso de erro no windows
+
+            -- PS C:> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+            
+        No macOS e Linux:
+
+            -- source meu_ambiente_virtual/bin/activate
+
+        Como Desativar um Ambiente Virtual
+
+            -- deactivate
+
+Instalar os seguintes pacotes Iniciais. 
+
+        pip install django
+        pip install pillow
+        pip install requests
+        pip install python-dotenv
+        pip install django-widget-tweaks
+        pip install django-requestlogs
+        pip install django-tinymce
+        pip install django-crispy-forms
+        pip install crispy-bootstrap5
+        pip install unidecode
+        pip install whitenoise
+
+
+
+
+        pip install django_summernote
+        pip install django-allauth
+        pip install django-cors-headers
+        pip install bleach==6.0.0
+        pip install django-session-timeout
+        
+        
+
+        
+
+-- django-admin startproject core .
+
+-- python manage.py startapp articles 
+
+-- python manage.py makemigrations
+
+-- python manage.py migrate
+
+-- python manage.py runserver
+
+-- python manage.py createsuperuser
+
+
+5. Comandos de gerenciamento
+
+
+-- python manage.py axes_reset
+
+-- python manage.py axes_reset_ip [ip_address]
+
+-- python manage.py axes_reset_username [username]
+
+
+
