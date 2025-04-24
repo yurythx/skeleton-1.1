@@ -1,41 +1,43 @@
 from django import forms
-from .models import Produto
-from django.core.exceptions import ValidationError
-from django.utils import timezone
+from .models import Produto, ImagemProduto
 
 
 class ProdutoForm(forms.ModelForm):
+    """Formulário para criação e edição de produtos."""
+
     class Meta:
         model = Produto
-        fields = [
-            'nome', 'descricao', 'preco', 'categoria',
-            'estoque', 'estoque_minimo', 'status', 'status_message',
-            'imagem', 'promocao_inicio', 'promocao_fim'
-        ]
+        exclude = ['slug']  # O slug será gerado automaticamente no método save()
         widgets = {
-            'descricao': forms.Textarea(attrs={'rows': 4}),
-            'preco': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
-            'estoque': forms.NumberInput(attrs={'min': '0'}),
-            'estoque_minimo': forms.NumberInput(attrs={'min': '0'}),
-            'promocao_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'promocao_fim': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'sku': forms.TextInput(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'preco': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'estoque': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'estoque_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'largura': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'altura': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'profundidade': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'status_message': forms.TextInput(attrs={'class': 'form-control'}),
+            'imagem': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'visivel': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'promocao_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'promocao_fim': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'produtos_relacionados': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
 
-    def clean_preco(self):
-        preco = self.cleaned_data.get('preco')
-        if preco < 0:
-            raise ValidationError("O preço não pode ser negativo.")
-        return preco
 
-    def clean(self):
-        cleaned_data = super().clean()
-        inicio = cleaned_data.get('promocao_inicio')
-        fim = cleaned_data.get('promocao_fim')
+class ImagemProdutoForm(forms.ModelForm):
+    """Formulário para adicionar imagens extras ao produto."""
 
-        if inicio and fim and inicio >= fim:
-            raise ValidationError("A data de término da promoção deve ser posterior à de início.")
-
-        if inicio and inicio < timezone.now():
-            raise ValidationError("A data de início da promoção não pode estar no passado.")
-
-        return cleaned_data
+    class Meta:
+        model = ImagemProduto
+        fields = ['imagem', 'legenda']
+        widgets = {
+            'imagem': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'legenda': forms.TextInput(attrs={'class': 'form-control'}),
+        }

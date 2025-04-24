@@ -8,8 +8,7 @@ class FornecedorForm(forms.ModelForm):
 
     class Meta:
         model = Fornecedor
-        fields = ['nome', 'email', 'telefone', 'cpf', 'cnpj', 'data_fundacao']
-    
+        fields = ['nome', 'email', 'telefone', 'cpf', 'cnpj', 'data_fundacao', 'endereco']
 
     def clean_cpf(self):
         """Validação personalizada para o campo CPF."""
@@ -32,9 +31,18 @@ class FornecedorForm(forms.ModelForm):
     def save(self, commit=True):
         """Salva o objeto Fornecedor, criando o slug automaticamente."""
         fornecedor = super().save(commit=False)
+        
+        # Criação do slug automaticamente se não fornecido
         if not fornecedor.slug:
             fornecedor.slug = fornecedor.nome.lower().replace(" ", "-")
         
+        # Garantir a unicidade do slug
+        original_slug = fornecedor.slug
+        counter = 1
+        while Fornecedor.objects.filter(slug=fornecedor.slug).exclude(pk=fornecedor.pk).exists():
+            fornecedor.slug = f"{original_slug}-{counter}"
+            counter += 1
+
         # Salvar o objeto no banco de dados
         if commit:
             fornecedor.save()

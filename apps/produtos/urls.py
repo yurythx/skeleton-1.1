@@ -1,22 +1,19 @@
+# produto/urls.py
 from django.urls import path
-from . import views
+from .views import (
+    ProdutoListView,
+    ProdutoDetailView,
+    ProdutoCreateView,
+    ProdutoUpdateView,
+    ProdutoDeleteView,
+)
 
-app_name = 'apps.produtos'  # Namespace para reverses como 'produtos:criar_produto'
+app_name = 'produtos'  # Define o app_name
 
 urlpatterns = [
-    # Lista de produtos (com suporte a AJAX + filtro)
-    path('', views.ProdutoListView.as_view(), name='lista_produtos'),
-
-    # Criação de produto
-    path('novo/', views.ProdutoCreateView.as_view(), name='criar_produto'),
-
-    # Detalhes (usado em modal ou página)
-    path('<slug:slug>/detalhes/', views.ProdutoDetailView.as_view(), name='detalhes_produto'),
-
-    # Edição de produto
-    path('<slug:slug>/editar/', views.ProdutoUpdateView.as_view(), name='editar_produto'),
-
-    # Exclusão de produto
-    path('<slug:slug>/excluir/', views.ProdutoDeleteView.as_view(), name='excluir_produto'),
-
+    path('', ProdutoListView.as_view(), name='lista_produtos'),  # Lista de produtos
+    path('novo/', ProdutoCreateView.as_view(), name='novo_produto'),  # Criar produto
+    path('<slug:slug>/', ProdutoDetailView.as_view(), name='detalhes_produto'),  # Visualizar produto específico
+    path('<slug:slug>/editar/', ProdutoUpdateView.as_view(), name='editar_produto'),  # Editar produto
+    path('<slug:slug>/excluir/', ProdutoDeleteView.as_view(), name='excluir_produto'),  # Excluir produto
 ]

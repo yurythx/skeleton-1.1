@@ -1,21 +1,11 @@
 from django import forms
-from tinymce.widgets import TinyMCE
-
-from .models import Article
-from .models import Comment
-import re
-
-
-# Personalizando o widget TinyMCE para não incluir o atributo 'required'
-class TinyMCEWidget(TinyMCE):
-    def use_required_attribute(self, *args):
-        return False  # Impede a inclusão do atributo 'required' no campo
+from .models import Article, Comment
 
 class ArticleForm(forms.ModelForm):
-    # Usando o TinyMCEWidget para o campo 'content'
+    # Usando o Textarea padrão para o campo 'content'
     content = forms.CharField(
-        widget=TinyMCEWidget(
-            attrs={'cols': 30, 'rows': 10, 'class': 'form-control', 'id': 'mytextarea'}
+        widget=forms.Textarea(
+            attrs={'cols': 30, 'rows': 10, 'class': 'form-control', 'id': 'id_content'}
         )
     )
 
@@ -40,9 +30,8 @@ class ArticleForm(forms.ModelForm):
         
         return excerpt  # Corrigido para retornar apenas o valor de 'excerpt'
         
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['author_name', 'text']
-
-

@@ -84,8 +84,18 @@ class Produto(models.Model):
                 raise ValidationError({'promocao_fim': "A data de término da promoção deve ser posterior à de início."})
 
     def clean(self):
-        if self.preco < 0:
+        # Validar preço não negativo
+        if self.preco is not None and self.preco < 0:
             raise ValidationError({'preco': "O preço não pode ser negativo."})
+
+        # Validar estoque e estoque mínimo
+        if self.estoque is None:
+            self.estoque = 0
+        if self.estoque_minimo is None:
+            self.estoque_minimo = 0
+
+        if self.estoque < self.estoque_minimo:
+            raise ValidationError({'estoque_minimo': "O estoque mínimo não pode ser maior que o estoque."})
 
         self._validar_imagem()
         self._validar_promocao()

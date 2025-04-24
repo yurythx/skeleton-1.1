@@ -15,7 +15,7 @@ urlpatterns = [
     path('clientes/', include('apps.clientes.urls', namespace='clientes')),
     path('fornecedores/', include('apps.fornecedores.urls', namespace='fornecedores')),
     path('produtos/', include('apps.produtos.urls', namespace='produtos')),
-
+    path('estoque/', include('apps.estoque.urls', namespace='estoque')),
     path('tinymce/', include('tinymce.urls')),
 ]
 

@@ -14,32 +14,45 @@ logger = logging.getLogger(__name__)
 def is_ajax(request):
     return request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-# Mixin para tratar a resposta AJAX
+# Mixin melhorado para tratar respostas AJAX
 class AjaxFormMixin:
     template_name_ajax = None
 
     def form_invalid(self, form):
-        """Se o formulário for inválido, responde com os erros em JSON para AJAX."""
+        """
+        Se o formulário for inválido, responde com os erros em JSON para AJAX.
+        """
         if is_ajax(self.request):
             return JsonResponse({'success': False, 'errors': form.errors}, status=400)
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        """Se o formulário for válido, responde com uma mensagem de sucesso em JSON para AJAX."""
+        """
+        Se o formulário for válido, responde com uma mensagem de sucesso em JSON para AJAX.
+        """
         self.object = form.save()
         if is_ajax(self.request):
             return JsonResponse({'success': True, 'message': 'Operação realizada com sucesso!'})
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
-        """Método GET para tratar requisições AJAX."""
+        """
+        Corrigido para suportar AJAX em ListView e DetailView sem causar AttributeError.
+        """
         if is_ajax(request):
             try:
+                # Para DetailView, UpdateView etc.
                 self.object = self.get_object()
             except AttributeError:
                 self.object = None
+
+            # Para ListView
+            if hasattr(self, 'get_queryset'):
+                self.object_list = self.get_queryset()
+
             context = self.get_context_data()
             return render(request, self.template_name_ajax or self.template_name, context)
+
         return super().get(request, *args, **kwargs)
 
 # CBV para login de usuário
@@ -49,21 +62,18 @@ class LoginView(FormView):
     success_url = '/'  # Redireciona para a home após login
 
     def form_valid(self, form):
-        """Valida as credenciais e faz o login do usuário."""
         username = form.cleaned_data['username']
         password = form.cleaned_data['password']
         user = authenticate(username=username, password=password)
         if user is not None:
             login(self.request, user)
-            # Redireciona para a URL solicitada originalmente ou para o success_url
             next_page = self.request.GET.get('next', self.success_url)
-            return redirect(next_page)  # Redireciona para a URL correta
+            return redirect(next_page)
         else:
             messages.error(self.request, 'Credenciais inválidas.')
             return self.form_invalid(form)
 
     def form_invalid(self, form):
-        """Retorna uma mensagem de erro quando o formulário é inválido."""
         messages.error(self.request, 'Erro ao validar o formulário.')
         return super().form_invalid(form)
 
@@ -74,7 +84,6 @@ class RegisterView(FormView):
     success_url = reverse_lazy('accounts:login')
 
     def form_valid(self, form):
-        """Cria o usuário e realiza o login automaticamente após o registro."""
         user = form.save()
         username = form.cleaned_data['username']
         password = form.cleaned_data['password1']
@@ -85,7 +94,6 @@ class RegisterView(FormView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        """Mensagem de erro caso o registro falhe."""
         messages.error(self.request, 'Erro ao registrar usuário.')
         return super().form_invalid(form)
 
@@ -98,7 +106,6 @@ class CustomUserListView(AjaxFormMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        """Filtra e pagina a lista de usuários com base nos parâmetros passados."""
         queryset = get_user_model().objects.all().order_by('-date_joined')
         nome = self.request.GET.get('nome', '')
         email = self.request.GET.get('email', '')
@@ -117,7 +124,6 @@ class CustomUserCreateView(AjaxFormMixin, CreateView):
 
     @transaction.atomic
     def form_valid(self, form):
-        """Cria um novo usuário e retorna um sucesso em caso de formulário válido."""
         response = super().form_valid(form)
         messages.success(self.request, 'Usuário criado com sucesso!')
         return response
@@ -130,11 +136,9 @@ class CustomUserDetailView(DetailView):
     slug_url_kwarg = 'slug'
 
     def get_object(self, queryset=None):
-        """Busca o usuário utilizando o slug."""
         return get_object_or_404(get_user_model(), slug=self.kwargs.get(self.slug_url_kwarg))
 
     def get(self, request, *args, **kwargs):
-        """Exibe o detalhe do usuário no formato de modal com AJAX."""
         self.object = self.get_object()
         context = self.get_context_data()
         if is_ajax(request):
@@ -150,12 +154,10 @@ class CustomUserUpdateView(AjaxFormMixin, UpdateView):
     slug_url_kwarg = 'slug'
 
     def get_object(self, queryset=None):
-        """Busca o usuário pelo slug para edição."""
         return get_object_or_404(get_user_model(), slug=self.kwargs.get(self.slug_url_kwarg))
 
     @transaction.atomic
     def form_valid(self, form):
-        """Atualiza o usuário e exibe uma mensagem de sucesso."""
         response = super().form_valid(form)
         if is_ajax(self.request):
             return JsonResponse({'success': True, 'message': 'Usuário atualizado com sucesso!'})
@@ -170,11 +172,9 @@ class CustomUserDeleteView(DeleteView):
     slug_url_kwarg = 'slug'
 
     def get_object(self, queryset=None):
-        """Busca o usuário pelo slug antes de deletá-lo."""
         return get_object_or_404(get_user_model(), slug=self.kwargs.get(self.slug_url_kwarg))
 
     def post(self, request, *args, **kwargs):
-        """Deleta o usuário e responde com JSON em caso de requisição AJAX."""
         self.object = self.get_object()
         email = self.object.email
         try:
@@ -189,8 +189,7 @@ class CustomUserDeleteView(DeleteView):
 
 # CBV para logout de usuário
 class LogoutView(FormView):
-    """View para realizar o logout e redirecionar para a home ou outra página."""
     def get(self, request, *args, **kwargs):
-        logout(request)  # Realiza o logout
+        logout(request)
         messages.success(request, 'Você foi desconectado com sucesso.')
-        return redirect('/')  # Redireciona para a home ou página desejada
+        return redirect('/')

@@ -182,6 +182,7 @@ INSTALLED_APPS = [
     'apps.fornecedores',
     'apps.enderecos',
     'apps.produtos',
+    'apps.estoque',
 ]
 
 # Middleware
