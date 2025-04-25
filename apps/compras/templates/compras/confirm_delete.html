@@ -1,0 +1,19 @@
+{% block content %}
+<div class="container">
+  <h2>Confirmar Exclusão</h2>
+
+  <div class="alert alert-warning" role="alert">
+    <strong>Atenção!</strong> A exclusão é permanente. Tem certeza que deseja excluir a compra de
+    <strong>{{ compra.quantidade }}x {{ compra.produto.nome }}</strong>
+    feita em <strong>{{ compra.data_compra|date:"d/m/Y" }}</strong> por <strong>{{ compra.fornecedor.nome }}</strong>?
+  </div>
+
+  <form method="post" action="{% url 'compras:excluir_compra' compra.slug %}">
+    {% csrf_token %}
+    <div class="mt-4 d-flex justify-content-end">
+      <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-danger" id="btn-excluir-compra">Excluir</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

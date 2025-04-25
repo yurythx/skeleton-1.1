@@ -1,0 +1,32 @@
+{% extends 'includes/base_cadastros.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+<style>
+
+    #kanban {
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .coluna {
+      width: 30%;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    
+    .tarefa {
+      background-color: #f4f4f4;
+      margin: 10px 0;
+      padding: 10px;
+      cursor: move;
+    }
+    </style>
+
+{% block content %}
+  <h1>Projetos</h1>
+  <ul>
+    {% for projeto in object_list %}
+      <li><a href="{% url 'projetos:projeto_detail' projeto.slug %}">{{ projeto.titulo }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

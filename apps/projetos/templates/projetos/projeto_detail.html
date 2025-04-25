@@ -1,0 +1,98 @@
+{% extends 'includes/base_cadastros.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<style>
+
+#kanban {
+  display: flex;
+  justify-content: space-between;
+}
+
+.coluna {
+  width: 30%;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.tarefa {
+  background-color: #f4f4f4;
+  margin: 10px 0;
+  padding: 10px;
+  cursor: move;
+}
+</style>
+
+
+  <h1>{{ object.titulo }}</h1>
+  <p>{{ object.descricao }}</p>
+
+  <div id="kanban">
+    <div class="coluna" id="backlog">
+      <h2>Backlog</h2>
+      {% for tarefa in object.tarefas.filter(status='backlog') %}
+        <div class="tarefa" data-id="{{ tarefa.id }}" data-status="backlog">
+          {{ tarefa.titulo }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="coluna" id="em_progresso">
+      <h2>Em Progresso</h2>
+      {% for tarefa in object.tarefas.filter(status='em_progresso') %}
+        <div class="tarefa" data-id="{{ tarefa.id }}" data-status="em_progresso">
+          {{ tarefa.titulo }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="coluna" id="concluida">
+      <h2>Concluída</h2>
+      {% for tarefa in object.tarefas.filter(status='concluida') %}
+        <div class="tarefa" data-id="{{ tarefa.id }}" data-status="concluida">
+          {{ tarefa.titulo }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tarefa').forEach(function(tarefa) {
+      tarefa.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text', tarefa.dataset.id);
+      });
+    });
+
+    document.querySelectorAll('.coluna').forEach(function(coluna) {
+      coluna.addEventListener('dragover', function(e) {
+        e.preventDefault();
+      });
+
+      coluna.addEventListener('drop', function(e) {
+        e.preventDefault();
+
+        const tarefaId = e.dataTransfer.getData('text');
+        const novoStatus = coluna.id;
+
+        fetch("{% url 'atualizar_status_tarefa' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+          },
+          body: JSON.stringify({
+            tarefa_id: tarefaId,
+            status: novoStatus,
+          }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'sucesso') {
+            location.reload();
+          } else {
+            alert('Erro ao atualizar status: ' + data.mensagem);
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

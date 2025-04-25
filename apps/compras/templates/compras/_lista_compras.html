@@ -1,0 +1,40 @@
+<div class="list-group shadow-sm" id="lista-compras">
+  {% for compra in compras %}
+    <div class="list-group-item d-flex justify-content-between align-items-center mb-3 p-3 rounded-3 border border-light bg-light" id="compra-{{ compra.slug }}">
+      <div class="d-flex align-items-center">
+        <span class="badge bg-primary me-3">{{ forloop.counter }}</span>
+        <div>
+          <h5 class="mb-1">
+            <a href="javascript:void(0);" class="text-primary fw-bold text-decoration-none"
+               onclick="abrirModalGenerico('{% url 'compras:detalhes_compra' compra.slug %}', 'Detalhes da Compra')">
+              {{ compra.produto.nome }} ({{ compra.quantidade }} un.)
+            </a>
+          </h5>
+          <p class="mb-1 text-muted">
+            <strong>Fornecedor:</strong> {{ compra.fornecedor.nome }}
+          </p>
+          <p class="mb-1">
+            <strong>Data:</strong> {{ compra.data_compra|date:"d/m/Y" }} |
+            <strong>Custo Unitário:</strong> R$ {{ compra.custo_unitario }}
+          </p>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-primary"
+                onclick="abrirModalGenerico('{% url 'compras:detalhes_compra' compra.slug %}', 'Detalhes da Compra')">
+          <i class="fas fa-info-circle"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-warning"
+                onclick="abrirModalGenerico('{% url 'compras:editar_compra' compra.slug %}', 'Editar Compra')">
+          <i class="fas fa-edit me-1"></i> Editar
+        </button>
+        <button class="btn btn-sm btn-outline-danger"
+                onclick="abrirModalGenerico('{% url 'compras:excluir_compra' compra.slug %}', 'Excluir Compra')">
+          <i class="fas fa-trash-alt me-1"></i> Excluir
+        </button>
+      </div>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-center text-muted">Nenhuma compra encontrada.</div>
+  {% endfor %}
+</div>

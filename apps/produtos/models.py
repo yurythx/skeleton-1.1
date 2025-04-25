@@ -4,6 +4,19 @@ from django.utils.text import slugify
 from unidecode import unidecode
 from django.utils import timezone
 
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+from unidecode import unidecode
+from django.utils import timezone
+from apps.estoque.models import Estoque  # Importando o modelo Estoque corretamente
+
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+from unidecode import unidecode
+from django.utils import timezone
+
 class Produto(models.Model):
     """Modelo representando um produto com validações completas e funcionalidades adicionais."""
 
@@ -33,10 +46,7 @@ class Produto(models.Model):
     preco = models.DecimalField(max_digits=10, decimal_places=2)
     categoria = models.ForeignKey('Categoria', on_delete=models.SET_NULL, null=True, blank=True)
 
-    estoque = models.PositiveIntegerField(default=0)
     estoque_minimo = models.PositiveIntegerField(default=0)
-
-    # Novos campos
     peso = models.PositiveIntegerField(default=0, help_text="Peso do produto em gramas.")
     largura = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Largura do produto em centímetros.")
     altura = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Altura do produto em centímetros.")
@@ -58,6 +68,13 @@ class Produto(models.Model):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def estoque(self):
+        """Retorna o estoque atual do produto, buscando do modelo Estoque."""
+        if hasattr(self, 'estoque_produto'):
+            return self.estoque_produto.quantidade
+        return 0
 
     @property
     def em_promocao(self):
@@ -88,14 +105,9 @@ class Produto(models.Model):
         if self.preco is not None and self.preco < 0:
             raise ValidationError({'preco': "O preço não pode ser negativo."})
 
-        # Validar estoque e estoque mínimo
-        if self.estoque is None:
-            self.estoque = 0
+        # Validar estoque mínimo
         if self.estoque_minimo is None:
             self.estoque_minimo = 0
-
-        if self.estoque < self.estoque_minimo:
-            raise ValidationError({'estoque_minimo': "O estoque mínimo não pode ser maior que o estoque."})
 
         self._validar_imagem()
         self._validar_promocao()
@@ -115,7 +127,7 @@ class Produto(models.Model):
             self.slug = slug
 
         # Status automático baseado no estoque e promoção
-        if self.estoque == 0:
+        if hasattr(self, 'estoque_produto') and self.estoque_produto.quantidade == 0:
             self.status = self.STATUS_INDISPONIVEL
         elif self.em_promocao:
             self.status = self.STATUS_PROMOCAO
@@ -126,12 +138,12 @@ class Produto(models.Model):
         super().save(*args, **kwargs)
 
     def atualizar_estoque(self, quantidade):
-        """Método para atualizar o estoque do produto."""
-        novo_estoque = self.estoque + quantidade
-        if novo_estoque < 0:
-            raise ValidationError("O estoque não pode ser negativo.")
-        self.estoque = novo_estoque
-        self.save()
+        """Método para atualizar o estoque do produto através do modelo Estoque."""
+        if hasattr(self, 'estoque_produto'):
+            self.estoque_produto.atualizar(quantidade=quantidade)
+        else:
+            raise ValidationError("Estoque não cadastrado para este produto.")
+
 
 class ImagemProduto(models.Model):
     """Múltiplas imagens para cada produto."""
@@ -141,6 +153,7 @@ class ImagemProduto(models.Model):
 
     def __str__(self):
         return f"Imagem de {self.produto.nome}"
+
 
 class Categoria(models.Model):
     """Modelo representando a categoria de um produto."""

@@ -183,6 +183,17 @@ INSTALLED_APPS = [
     'apps.enderecos',
     'apps.produtos',
     'apps.estoque',
+    'apps.compras',
+    'apps.vendas',
+    'apps.itens_venda',
+    'apps.caixa',
+    'apps.servicos',
+    'apps.pedidos',
+    'apps.financeiro',
+    'apps.projetos',
+    'apps.veiculos',
+    'apps.motoristas',
+    
 ]
 
 # Middleware

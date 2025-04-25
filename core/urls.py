@@ -16,6 +16,17 @@ urlpatterns = [
     path('fornecedores/', include('apps.fornecedores.urls', namespace='fornecedores')),
     path('produtos/', include('apps.produtos.urls', namespace='produtos')),
     path('estoque/', include('apps.estoque.urls', namespace='estoque')),
+    path('vendas/', include('apps.vendas.urls', namespace='vendas')),
+    path('caixa/', include('apps.caixa.urls', namespace='caixa')),
+    path('compras/', include('apps.compras.urls', namespace='compras')),
+    path('financeiro/', include('apps.financeiro.urls', namespace='financeiro')),
+    path('itens_venda/', include('apps.itens_venda.urls', namespace='itens_venda')),
+    path('pedidos/', include('apps.pedidos.urls', namespace='pedidos')),
+    path('veiculos/', include('apps.veiculos.urls', namespace='veiculos')),
+    path('motoristas/', include('apps.motoristas.urls', namespace='motoristas')),
+
+    
+    path('projetos/', include('apps.projetos.urls', namespace='projetos')),
     path('tinymce/', include('tinymce.urls')),
 ]
 
