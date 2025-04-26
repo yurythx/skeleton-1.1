@@ -1,0 +1,34 @@
+   
+ <!-- Botão flutuante -->
+<!-- Botão flutuante com ícone -->
+<button id="ia-button" onclick="toggleChat()" aria-label="Abrir chat com a ISA">
+    <!-- Exemplo usando ícone do FontAwesome -->
+    <i class="fas fa-comments"></i> <!-- Ícone de conversa do FontAwesome -->
+    
+  </button>
+
+  <!-- Caixa de chat -->
+  <div id="chat-box" role="dialog" aria-label="Chat com a assistente ISA">
+    <div id="chat-header">
+      ISA - Assistente Virtual
+      <span role="button" tabindex="0" onclick="toggleChat()" aria-label="Fechar chat">✕</span>
+    </div>
+    <div id="messages" aria-live="polite"></div>
+    <div id="chat-input">
+      <input type="text" id="user-input" placeholder="Digite sua mensagem..." aria-label="Mensagem para a assistente" />
+      <button class="send-btn" onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <!-- Sons -->
+  <audio id="send-sound" src="/static/sounds/send.mp3" preload="auto"></audio>
+  <audio id="receive-sound" src="/static/sounds/receive.mp3" preload="auto"></audio>
+
+  <!-- Linkando os arquivos CSS e JS -->
+
+  <link rel="stylesheet" href="{{ ASSETS_ROOT }}pages/chat/css/chat.css">
+  
+  
+  <script src="{{ ASSETS_ROOT }}pages/chat/js/chat.js"></script>
+
+ 

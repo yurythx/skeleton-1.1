@@ -1,0 +1,149 @@
+/* chat.css */
+:root {
+  --cef-blue: #0061b0;
+  --cef-yellow: #fcd116;
+  --cef-hover-blue: #005085;
+  --primary-color: #0061b0; /* Cor azul da Caixa */
+}
+
+#ia-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: var(--cef-blue);
+  color: white;
+  border: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Animação de destaque */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 97, 176, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 12px rgba(0, 97, 176, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 97, 176, 0);
+  }
+}
+
+#ia-button:hover {
+  background-color: var(--cef-hover-blue);
+}
+
+#ia-button img {
+  width: 28px; /* Ajuste o tamanho do ícone */
+  height: 28px; /* Ajuste o tamanho do ícone */
+}
+
+/* Adiciona a rotação do ícone quando o botão é clicado */
+#ia-button:hover img {
+  transform: rotate(180deg);
+}
+
+#chat-box {
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  width: 340px;
+  max-height: 520px;
+  background: #fdfdfd;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  display: none;
+  flex-direction: column;
+  z-index: 999;
+  overflow: hidden;
+}
+
+#chat-header {
+  background: var(--cef-blue);
+  color: #fff;
+  padding: 14px 18px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+}
+
+#messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  max-width: 80%;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.user-message {
+  background-color: #d9fdd3;
+  margin-left: auto;
+}
+
+.ia-message {
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+
+.ia-avatar {
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 191, 255, 0.6);
+  flex-shrink: 0;
+}
+
+#chat-input {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background: #fff;
+}
+
+#user-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+}
+
+.send-btn {
+  margin-left: 8px;
+  padding: 10px 14px;
+  background-color: var(--cef-blue);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.send-btn:hover {
+  background-color: var(--cef-hover-blue);
+}
