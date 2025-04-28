@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.db import transaction
 from django.contrib import messages
 import logging
+from django.core.exceptions import ValidationError
 
 # Importa o modelo e os formulários utilizados
 from .models import Compra
@@ -84,18 +85,92 @@ class CompraCreateView(AjaxFormMixin, CreateView):
     model = Compra
     form_class = CompraForm
     template_name = 'compras/form_compra.html'
+    success_url = reverse_lazy('compras:lista_compras')
 
     def form_valid(self, form):
         """Após salvar a compra, realiza a atualização de estoque."""
-        response = super().form_valid(form)
-        self.object.atualizar_estoque()  # Atualiza o estoque após a compra
-        if is_ajax(self.request):
-            return JsonResponse({'success': True, 'message': 'Compra criada com sucesso!'})
-        messages.success(self.request, 'Compra criada com sucesso!')
-        return redirect('compras:lista_compras')
+        try:
+            with transaction.atomic():
+                # Salva o formulário
+                self.object = form.save(commit=False)
+                
+                # Preenche os campos de usuário
+                self.object.usuario_criacao = self.request.user
+                self.object.usuario_atualizacao = self.request.user
+                
+                # Calcula os valores antes de salvar
+                self.object.calcular_valores()
+                
+                # Valida o objeto antes de salvar
+                self.object.full_clean()
+                
+                # Salva o objeto
+                self.object.save()
+                
+                # Se a compra estiver confirmada, atualiza o estoque e cria movimentações
+                if self.object.status == 'confirmada':
+                    try:
+                        # Verifica se há caixa aberto antes de prosseguir
+                        from apps.financeiro.models import Caixa
+                        caixa = Caixa.objects.filter(status='aberto').first()
+                        if not caixa and self.object.forma_pagamento != 'prazo':
+                            raise ValidationError("Não há caixa aberto para registrar a movimentação financeira.")
+
+                        # Atualiza o estoque
+                        self.object.atualizar_estoque()
+                        
+                        # Cria as movimentações financeiras
+                        if self.object.forma_pagamento == 'prazo':
+                            self.object.criar_parcelas()
+                        else:
+                            self.object.criar_movimentacao_financeira()
+                            
+                    except ValidationError as e:
+                        logger.error(f"Erro ao processar compra confirmada: {str(e)}")
+                        raise
+                    except Exception as e:
+                        logger.error(f"Erro inesperado ao processar compra confirmada: {str(e)}")
+                        raise ValidationError(f"Erro ao processar compra confirmada: {str(e)}")
+
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Compra criada com sucesso!',
+                    'redirect_url': self.success_url
+                })
+            messages.success(self.request, 'Compra criada com sucesso!')
+            return redirect(self.success_url)
+            
+        except ValidationError as e:
+            logger.error(f"Erro de validação ao criar compra: {str(e)}")
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': False,
+                    'message': str(e),
+                    'errors': {'__all__': [str(e)]}
+                }, status=400)
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+            
+        except Exception as e:
+            logger.error(f"Erro inesperado ao criar compra: {str(e)}")
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Erro ao criar compra: {str(e)}'
+                }, status=400)
+            messages.error(self.request, f'Erro ao criar compra: {str(e)}')
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
-        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        logger.error(f"Erros de validação do formulário: {form.errors}")
+        if is_ajax(self.request):
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors,
+                'message': 'Por favor, corrija os erros abaixo.'
+            }, status=400)
+        return super().form_invalid(form)
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -114,15 +189,65 @@ class CompraUpdateView(AjaxFormMixin, UpdateView):
 
     def form_valid(self, form):
         """Após salvar a compra, realiza a atualização de estoque."""
-        response = super().form_valid(form)
-        self.object.atualizar_estoque()  # Atualiza o estoque após a edição
-        if is_ajax(self.request):
-            return JsonResponse({'success': True, 'message': 'Compra atualizada com sucesso!'})
-        messages.success(self.request, 'Compra atualizada com sucesso!')
-        return redirect('compras:lista_compras')
+        try:
+            with transaction.atomic():
+                # Salva o formulário
+                self.object = form.save(commit=False)
+                
+                # Atualiza o usuário de atualização
+                self.object.usuario_atualizacao = self.request.user
+                
+                # Calcula os valores antes de salvar
+                self.object.calcular_valores()
+                
+                # Valida o objeto antes de salvar
+                self.object.full_clean()
+                
+                # Salva o objeto
+                self.object.save()
+                
+                # Atualiza o estoque
+                self.object.atualizar_estoque()
+
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Compra atualizada com sucesso!',
+                    'redirect_url': reverse_lazy('compras:lista_compras')
+                })
+            messages.success(self.request, 'Compra atualizada com sucesso!')
+            return redirect('compras:lista_compras')
+            
+        except ValidationError as e:
+            logger.error(f"Erro de validação ao atualizar compra: {str(e)}")
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': False,
+                    'message': str(e),
+                    'errors': {'__all__': [str(e)]}
+                }, status=400)
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+            
+        except Exception as e:
+            logger.error(f"Erro inesperado ao atualizar compra: {str(e)}")
+            if is_ajax(self.request):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Erro ao atualizar compra: {str(e)}'
+                }, status=400)
+            messages.error(self.request, f'Erro ao atualizar compra: {str(e)}')
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
-        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        logger.error(f"Erros de validação do formulário: {form.errors}")
+        if is_ajax(self.request):
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors,
+                'message': 'Por favor, corrija os erros abaixo.'
+            }, status=400)
+        return super().form_invalid(form)
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -140,14 +265,27 @@ class CompraDetailView(DetailView):
     slug_url_kwarg = 'slug'
 
     def get_object(self):
-        return get_object_or_404(Compra, slug=self.kwargs['slug'])
+        try:
+            return get_object_or_404(Compra, slug=self.kwargs['slug'])
+        except Exception as e:
+            logger.error(f"Erro ao buscar compra: {str(e)}")
+            raise
 
     def get(self, request, *args, **kwargs):
-        if is_ajax(request):
-            self.object = self.get_object()
-            context = self.get_context_data()
-            return render(request, self.template_name, context)
-        return super().get(request, *args, **kwargs)
+        try:
+            if is_ajax(request):
+                self.object = self.get_object()
+                context = self.get_context_data()
+                return render(request, self.template_name, context)
+            return super().get(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Erro ao renderizar detalhes da compra: {str(e)}")
+            if is_ajax(request):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Erro ao carregar detalhes: {str(e)}'
+                }, status=500)
+            raise
 
 
 # View para exclusão de compras

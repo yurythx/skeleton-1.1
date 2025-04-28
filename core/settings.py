@@ -194,6 +194,8 @@ INSTALLED_APPS = [
     'apps.veiculos',
     'apps.motoristas',
     
+    'apps.chatbot',
+    
 ]
 
 # Middleware

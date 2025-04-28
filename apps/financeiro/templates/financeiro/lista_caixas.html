@@ -1,0 +1,93 @@
+{% extends 'includes/base_cadastros.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Caixas</h1>
+    <a href="{% url 'financeiro:abrir_caixa' %}" class="btn btn-primary">
+      <i class="fas fa-plus-circle me-1"></i> Abrir Novo Caixa
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Status</th>
+              <th>Saldo Atual</th>
+              <th>Data de Abertura</th>
+              <th>Data de Fechamento</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for caixa in caixas %}
+            <tr>
+              <td>{{ caixa.nome }}</td>
+              <td>
+                <span class="badge {% if caixa.status == 'aberto' %}bg-success{% else %}bg-danger{% endif %}">
+                  {{ caixa.get_status_display }}
+                </span>
+              </td>
+              <td>R$ {{ caixa.saldo_atual }}</td>
+              <td>{{ caixa.data_abertura|date:"d/m/Y H:i" }}</td>
+              <td>{{ caixa.data_fechamento|date:"d/m/Y H:i"|default:"-" }}</td>
+              <td>
+                {% if caixa.status == 'aberto' %}
+                <button class="btn btn-sm btn-danger" onclick="fecharCaixa('{{ caixa.slug }}')">
+                  <i class="fas fa-times-circle me-1"></i> Fechar
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">Nenhum caixa encontrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fecharCaixa(slug) {
+  if (confirm('Tem certeza que deseja fechar este caixa?')) {
+    fetch(`/financeiro/caixa/${slug}/fechar/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || 'Erro ao fechar caixa.');
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      alert('Erro ao fechar caixa.');
+    });
+  }
+}
+</script>
+{% endblock %} 

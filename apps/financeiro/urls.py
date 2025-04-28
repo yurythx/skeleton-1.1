@@ -1,11 +1,22 @@
 from django.urls import path
-from . import views
+from .views import (
+    FinanceiroListView,
+    FinanceiroCreateView,
+    FinanceiroUpdateView,
+    FinanceiroDeleteView,
+    FinanceiroDetailView,
+    AbrirCaixaView,
+    CaixaListView,
+)
 
-app_name = 'financeiro'  # Define o app_name
+app_name = 'financeiro'
 
 urlpatterns = [
-    path('movimentacoes/', views.MovimentacaoListView.as_view(), name='movimentacao_list'),
-    path('movimentacao/<slug:slug>/', views.MovimentacaoDetailView.as_view(), name='movimentacao_detail'),
-    path('movimentacao/criar/', views.MovimentacaoCreateView.as_view(), name='movimentacao_create'),
-    path('movimentacao/atualizar/<slug:slug>/', views.MovimentacaoUpdateView.as_view(), name='movimentacao_update'),
+    path('', FinanceiroListView.as_view(), name='lista_financeiro'),
+    path('detalhes/<slug:slug>/', FinanceiroDetailView.as_view(), name='detalhes_financeiro'),
+    path('novo/', FinanceiroCreateView.as_view(), name='novo_financeiro'),
+    path('<slug:slug>/editar/', FinanceiroUpdateView.as_view(), name='editar_financeiro'),
+    path('<slug:slug>/excluir/', FinanceiroDeleteView.as_view(), name='excluir_financeiro'),
+    path('caixa/abrir/', AbrirCaixaView.as_view(), name='abrir_caixa'),
+    path('caixa/', CaixaListView.as_view(), name='lista_caixas'),
 ]

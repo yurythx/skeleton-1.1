@@ -1,0 +1,99 @@
+{% load crispy_forms_tags %}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Detalhes da Movimentação</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Descrição:</label>
+        <p>{{ movimentacao.descricao }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Tipo:</label>
+        <p>
+          {% if movimentacao.tipo == 'entrada' %}
+            <span class="badge bg-success">Entrada</span>
+          {% elif movimentacao.tipo == 'saida' %}
+            <span class="badge bg-danger">Saída</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Valor:</label>
+        <p>R$ {{ movimentacao.valor|floatformat:2 }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Data:</label>
+        <p>{{ movimentacao.data|date:"d/m/Y" }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Forma de Pagamento:</label>
+        <p>{{ movimentacao.get_forma_pagamento_display }}</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Responsável:</label>
+        <p>{{ movimentacao.responsavel.nome }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Categoria:</label>
+        <p>{{ movimentacao.categoria.nome }}</p>
+      </div>
+    </div>
+
+    {% if movimentacao.observacoes %}
+    <div class="row">
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Observações:</label>
+        <p>{{ movimentacao.observacoes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-12">
+        <label class="form-label fw-bold">Histórico de Alterações:</label>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in movimentacao.logs.all %}
+              <tr>
+                <td>{{ log.data_alteracao|date:"d/m/Y H:i" }}</td>
+                <td>{{ log.usuario.username }}</td>
+                <td>{{ log.get_acao_display }}</td>
+                <td>{{ log.detalhes }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center">Nenhum registro encontrado</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      <a href="{% url 'caixa:editar_movimentacao' movimentacao.id %}" class="btn btn-primary">Editar</a>
+    </div>
+  </div>
+</div> 

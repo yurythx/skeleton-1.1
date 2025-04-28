@@ -1,7 +1,11 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import CheckConstraint
+from django.db.models import Q
+from django.db.models import Index
+from decimal import Decimal
 
 
 class Estoque(models.Model):
@@ -12,6 +16,22 @@ class Estoque(models.Model):
     minimo = models.PositiveIntegerField(default=0)
     custo_medio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['produto']),
+            models.Index(fields=['quantidade']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantidade__gte=0),
+                name='estoque_quantidade_nao_negativa'
+            ),
+            models.CheckConstraint(
+                check=models.Q(custo_medio__gte=0),
+                name='estoque_custo_medio_nao_negativo'
+            ),
+        ]
+
     def atualizar(self, quantidade, custo_unitario=None):
         """Atualiza o estoque e o custo médio."""
         if quantidade == 0:
@@ -19,18 +39,20 @@ class Estoque(models.Model):
 
         novo_estoque = self.quantidade + quantidade
         if novo_estoque < 0:
-            raise ValidationError("Estoque não pode ficar negativo.")
+            raise ValidationError(f"Estoque não pode ficar negativo. Tentativa de saída: {quantidade}, Estoque atual: {self.quantidade}")
 
         if quantidade > 0:
             if custo_unitario is None:
                 raise ValidationError("Entradas devem conter custo unitário.")
+            if custo_unitario <= 0:
+                raise ValidationError("Custo unitário deve ser maior que zero.")
             # Cálculo do novo custo médio ponderado
-            total_atual = self.quantidade * self.custo_medio
-            total_novo = quantidade * custo_unitario
+            total_atual = Decimal(str(self.quantidade)) * self.custo_medio
+            total_novo = Decimal(str(quantidade)) * Decimal(str(custo_unitario))
             if self.quantidade + quantidade == 0:
-                self.custo_medio = 0
+                self.custo_medio = Decimal('0.00')
             else:
-                self.custo_medio = (total_atual + total_novo) / (self.quantidade + quantidade)
+                self.custo_medio = (total_atual + total_novo) / Decimal(str(self.quantidade + quantidade))
 
         self.quantidade = novo_estoque
         self.save()
@@ -65,14 +87,44 @@ class MovimentoEstoque(models.Model):
     descricao = models.TextField(blank=True, null=True)
 
     class Meta:
+        indexes = [
+            models.Index(fields=['produto']),
+            models.Index(fields=['data']),
+            models.Index(fields=['tipo']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantidade__gt=0),
+                name='movimento_quantidade_positiva'
+            ),
+            models.CheckConstraint(
+                check=models.Q(custo_unitario__gte=0),
+                name='movimento_custo_unitario_nao_negativo'
+            ),
+        ]
         ordering = ['-data']
 
     def __str__(self):
         return f"{self.get_tipo_display()} de {self.quantidade} em {self.produto.nome} ({self.data.strftime('%d/%m/%Y')})"
 
+    def clean(self):
+        """Validações do modelo."""
+        super().clean()
+        
+        if self.quantidade <= 0:
+            raise ValidationError("A quantidade deve ser maior que zero.")
+        
+        if self.custo_unitario < 0:
+            raise ValidationError("O custo unitário não pode ser negativo.")
+        
+        if self.tipo == self.TIPO_ENTRADA and self.custo_unitario <= 0:
+            raise ValidationError("Entradas devem ter custo unitário maior que zero.")
+
+    @transaction.atomic
     def save(self, *args, **kwargs):
         """Sobrescreve o método save para ajustar o estoque de forma automática."""
-
+        self.full_clean()
+        
         estoque = self.produto.estoque_produto
 
         if self.tipo == self.TIPO_ENTRADA:
@@ -82,7 +134,7 @@ class MovimentoEstoque(models.Model):
 
         elif self.tipo == self.TIPO_SAIDA:
             if self.quantidade > estoque.quantidade:
-                raise ValidationError("Não há estoque suficiente para essa saída.")
+                raise ValidationError(f"Não há estoque suficiente para essa saída. Estoque atual: {estoque.quantidade}")
             estoque.atualizar(quantidade=-self.quantidade)
 
         elif self.tipo == self.TIPO_AJUSTE:

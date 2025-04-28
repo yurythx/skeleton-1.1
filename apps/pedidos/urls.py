@@ -1,12 +1,19 @@
 # pedidos/urls.py
 from django.urls import path
-from . import views
+from .views import (
+    PedidoListView,
+    PedidoCreateView,
+    PedidoUpdateView,
+    PedidoDeleteView,
+    PedidoDetailView,
+)
 
 app_name = 'pedidos'  # Define o app_name
 
 urlpatterns = [
-    path('pedidos/', views.PedidoListView.as_view(), name='pedido_list'),
-    path('pedido/<slug:slug>/', views.PedidoDetailView.as_view(), name='pedido_detail'),
-    path('pedido/criar/', views.PedidoCreateView.as_view(), name='pedido_create'),
-    path('pedido/atualizar/<slug:slug>/', views.PedidoUpdateView.as_view(), name='pedido_update'),
+    path('', PedidoListView.as_view(), name='lista_pedidos'),
+    path('detalhes/<slug:slug>/', PedidoDetailView.as_view(), name='detalhes_pedido'),
+    path('novo/', PedidoCreateView.as_view(), name='novo_pedido'),
+    path('<slug:slug>/editar/', PedidoUpdateView.as_view(), name='editar_pedido'),
+    path('<slug:slug>/excluir/', PedidoDeleteView.as_view(), name='excluir_pedido'),
 ]

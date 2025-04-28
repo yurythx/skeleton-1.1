@@ -4,8 +4,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 
 class Veiculo(models.Model):
-    """Modelo representando um veículo para cadastro."""
-
+    """Modelo para cadastro de veículos."""
     TIPO_CHOICES = [
         ('carro', 'Carro'),
         ('moto', 'Moto'),
@@ -13,30 +12,31 @@ class Veiculo(models.Model):
         ('outro', 'Outro'),
     ]
 
-    marca = models.CharField(max_length=100)
-    modelo = models.CharField(max_length=100)
-    ano = models.PositiveIntegerField()
     placa = models.CharField(max_length=10, unique=True)
-    cor = models.CharField(max_length=50)
+    modelo = models.CharField(max_length=50)
+    marca = models.CharField(max_length=50)
+    ano = models.PositiveIntegerField()
+    cor = models.CharField(max_length=30)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='carro')
     chassi = models.CharField(max_length=50, unique=True)
     renavam = models.CharField(max_length=20, unique=True)
     observacoes = models.TextField(blank=True, null=True)
-
     slug = models.SlugField(unique=True, blank=True)
-    data_cadastro = models.DateTimeField(auto_now_add=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_atualizacao = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Veículo"
-        verbose_name_plural = "Veículos"
-        ordering = ['marca', 'modelo', 'ano']
+        verbose_name = 'Veículo'
+        verbose_name_plural = 'Veículos'
+        ordering = ['placa']
         indexes = [
-            models.Index(fields=['slug']),
             models.Index(fields=['placa']),
+            models.Index(fields=['chassi']),
+            models.Index(fields=['renavam']),
         ]
 
     def __str__(self):
-        return f"{self.marca} {self.modelo} - {self.placa}"
+        return f"{self.placa} - {self.modelo} {self.marca}"
 
     def clean(self):
         # Validações personalizadas

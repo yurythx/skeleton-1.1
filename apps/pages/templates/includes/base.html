@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
+{% load static %}
 
 
 {% include 'includes/parciais/_head.html' %}
@@ -15,16 +16,14 @@
   </main>
 
   {% include 'includes/parciais/_footer.html' %}
-
-  {% include 'pages/chat.html' %}
-
+  
   <!-- Scripts comuns -->
   {% include 'includes/parciais/_scripts.html' %}
 
-  <!-- Scripts específicos por página -->
+  <!-- Chatbot -->
 
-  
-  
+
+  <!-- Scripts específicos por página -->
   {% block extra_scripts %}
   {% endblock %}
 </body>

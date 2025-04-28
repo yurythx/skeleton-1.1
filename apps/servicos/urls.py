@@ -1,11 +1,18 @@
 from django.urls import path
-from . import views
+from .views import (
+    ServicoListView,
+    ServicoCreateView,
+    ServicoUpdateView,
+    ServicoDeleteView,
+    ServicoDetailView,
+)
 
-app_name = 'servicos'  # Define o app_name
+app_name = 'servicos'
 
 urlpatterns = [
-    path('servicos/', views.ServicoListView.as_view(), name='servico_list'),
-    path('servico/<slug:slug>/', views.ServicoDetailView.as_view(), name='servico_detail'),
-    path('servico/criar/', views.ServicoCreateView.as_view(), name='servico_create'),
-    path('servico/atualizar/<slug:slug>/', views.ServicoUpdateView.as_view(), name='servico_update'),
+    path('', ServicoListView.as_view(), name='lista_servicos'),
+    path('detalhes/<slug:slug>/', ServicoDetailView.as_view(), name='detalhes_servico'),
+    path('novo/', ServicoCreateView.as_view(), name='novo_servico'),
+    path('<slug:slug>/editar/', ServicoUpdateView.as_view(), name='editar_servico'),
+    path('<slug:slug>/excluir/', ServicoDeleteView.as_view(), name='excluir_servico'),
 ]

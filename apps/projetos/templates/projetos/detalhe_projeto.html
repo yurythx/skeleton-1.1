@@ -1,0 +1,105 @@
+{% load crispy_forms_tags %}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Detalhes do Projeto</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Nome do Projeto:</label>
+        <p>{{ projeto.nome }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Cliente:</label>
+        <p>{{ projeto.cliente.nome }}</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Data de Início:</label>
+        <p>{{ projeto.data_inicio|date:"d/m/Y" }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Data de Término:</label>
+        <p>{{ projeto.data_termino|date:"d/m/Y" }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Orçamento:</label>
+        <p>R$ {{ projeto.orcamento|floatformat:2 }}</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Gerente:</label>
+        <p>{{ projeto.gerente.nome }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Status:</label>
+        <p>
+          {% if projeto.status == 'planejamento' %}
+            <span class="badge bg-info">Planejamento</span>
+          {% elif projeto.status == 'em_andamento' %}
+            <span class="badge bg-primary">Em Andamento</span>
+          {% elif projeto.status == 'concluido' %}
+            <span class="badge bg-success">Concluído</span>
+          {% elif projeto.status == 'suspenso' %}
+            <span class="badge bg-warning">Suspenso</span>
+          {% elif projeto.status == 'cancelado' %}
+            <span class="badge bg-danger">Cancelado</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    {% if projeto.descricao %}
+    <div class="row">
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Descrição:</label>
+        <p>{{ projeto.descricao }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-12">
+        <label class="form-label fw-bold">Histórico de Alterações:</label>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in projeto.logs.all %}
+              <tr>
+                <td>{{ log.data_alteracao|date:"d/m/Y H:i" }}</td>
+                <td>{{ log.usuario.username }}</td>
+                <td>{{ log.get_acao_display }}</td>
+                <td>{{ log.detalhes }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center">Nenhum registro encontrado</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      <a href="{% url 'projetos:editar_projeto' projeto.id %}" class="btn btn-primary">Editar</a>
+    </div>
+  </div>
+</div> 

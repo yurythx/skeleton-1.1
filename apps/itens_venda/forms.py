@@ -4,7 +4,7 @@ from .models import ItemVenda
 class ItemVendaForm(forms.ModelForm):
     class Meta:
         model = ItemVenda
-        fields = ['pedido', 'produto', 'quantidade', 'preco_unitario', 'desconto']
+        fields = ['venda', 'produto', 'quantidade', 'preco_unitario', 'desconto']
 
     def clean_quantidade(self):
         quantidade = self.cleaned_data['quantidade']

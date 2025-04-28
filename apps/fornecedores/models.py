@@ -1,17 +1,21 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from django.utils import timezone
+from unidecode import unidecode
 import re
 from django.db.utils import IntegrityError
 
 # Modelo de Fornecedor
 class Fornecedor(models.Model):
-    """Modelo de Fornecedor."""
+    """Modelo de Fornecedor com integração financeira."""
 
     class Meta:
         verbose_name = 'Fornecedor'
         verbose_name_plural = 'Fornecedores'
+        ordering = ['-data_cadastro']
 
+    # Informações básicas
     nome = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True, null=False, max_length=255)
     email = models.EmailField(unique=True)
@@ -21,42 +25,157 @@ class Fornecedor(models.Model):
     data_fundacao = models.DateField(null=True, blank=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
     endereco = models.OneToOneField('enderecos.Endereco', on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Campos financeiros
+    limite_credito = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    saldo_devedor = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('ativo', 'Ativo'),
+            ('inativo', 'Inativo'),
+            ('bloqueado', 'Bloqueado'),
+            ('pre_cadastro', 'Pré-cadastro')
+        ],
+        default='pre_cadastro'
+    )
+    
+    # Campos de controle
+    observacoes = models.TextField(blank=True, null=True)
+    data_atualizacao = models.DateTimeField(auto_now=True)
+    ultima_compra = models.DateTimeField(null=True, blank=True)
+    total_compras = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_servicos = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    prazo_pagamento = models.IntegerField(default=30)  # Prazo padrão em dias
+    condicao_pagamento = models.CharField(
+        max_length=50,
+        choices=[
+            ('a_vista', 'À Vista'),
+            ('30_dias', '30 Dias'),
+            ('60_dias', '60 Dias'),
+            ('90_dias', '90 Dias'),
+            ('personalizado', 'Personalizado')
+        ],
+        default='30_dias'
+    )
 
     def __str__(self):
         return self.nome
 
     def clean(self):
-        """Validações personalizadas de CPF e CNPJ."""
+        """Validações e formatações personalizadas de CPF e CNPJ."""
         if self.cpf:
-            if not re.match(r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', self.cpf):
-                raise ValidationError({'cpf': "Formato de CPF inválido. Use XXX.XXX.XXX-XX"})
+            cpf_numeros = re.sub(r'\D', '', self.cpf)
+            if len(cpf_numeros) != 11:
+                raise ValidationError({'cpf': "CPF deve conter 11 dígitos."})
+            self.cpf = f"{cpf_numeros[:3]}.{cpf_numeros[3:6]}.{cpf_numeros[6:9]}-{cpf_numeros[9:]}"
         
         if self.cnpj:
-            if not re.match(r'^\d{2}\.\d{3}\.\d{3}/0001-\d{2}$', self.cnpj):
-                raise ValidationError({'cnpj': "Formato de CNPJ inválido. Use XX.XXX.XXX/0001-XX"})
+            cnpj_numeros = re.sub(r'\D', '', self.cnpj)
+            if len(cnpj_numeros) != 14:
+                raise ValidationError({'cnpj': "CNPJ deve conter 14 dígitos."})
+            self.cnpj = f"{cnpj_numeros[:2]}.{cnpj_numeros[2:5]}.{cnpj_numeros[5:8]}/{cnpj_numeros[8:12]}-{cnpj_numeros[12:]}"
+        
+        if not self.cpf and not self.cnpj:
+            raise ValidationError("Informe pelo menos o CPF ou o CNPJ.")
 
     def save(self, *args, **kwargs):
-        """Criação ou atualização do slug automaticamente antes de salvar o fornecedor."""
+        """Geração automática e segura de slug único."""
         if not self.slug:
-            self.slug = slugify(self.nome)
+            base_slug = slugify(unidecode(self.nome))
+            slug = base_slug
+            counter = 1
+            while Fornecedor.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
 
-        # Garantir que o slug seja único, ignorando o próprio objeto no update
-        original_slug = self.slug
-        counter = 1
-        while True:
-            try:
-                super().save(*args, **kwargs)  # Tenta salvar o objeto
-                break  # Se não gerar erro, finaliza o loop
-            except IntegrityError:  # Caso ocorra erro de unicidade (slug duplicado)
-                # Se já houver um slug duplicado, incrementamos o número
-                # Encontramos o maior número de sufixo usado e incrementamos
-                max_suffix = Fornecedor.objects.filter(slug__startswith=original_slug).aggregate(models.Max('slug'))
-                if max_suffix['slug__max']:
-                    # Se já existir um sufixo, pegamos o maior número e incrementamos
-                    suffix_number = int(max_suffix['slug__max'].split('-')[-1]) + 1
-                else:
-                    # Caso não haja sufixo, começamos pelo número 1
-                    suffix_number = 1
-                self.slug = f"{original_slug}-{suffix_number}"
-        
+        self.full_clean()
         super().save(*args, **kwargs)
+
+    def atualizar_saldo_devedor(self):
+        """Atualiza o saldo devedor do fornecedor."""
+        from apps.financeiro.models import MovimentacaoFinanceira, Parcela
+        
+        # Soma todas as parcelas não quitadas
+        parcelas_nao_quitadas = Parcela.objects.filter(
+            movimentacao__fornecedor=self,
+            quitado=False
+        ).aggregate(total=models.Sum('valor_total'))['total'] or 0
+        
+        self.saldo_devedor = parcelas_nao_quitadas
+        self.save()
+
+    def verificar_limite_credito(self, valor):
+        """Verifica se o fornecedor tem limite de crédito suficiente."""
+        if self.status != 'ativo':
+            raise ValidationError("Fornecedor não está ativo para realizar compras.")
+        
+        if self.saldo_devedor + valor > self.limite_credito:
+            raise ValidationError("Limite de crédito insuficiente para esta operação.")
+        
+        return True
+
+    def registrar_compra(self, valor):
+        """Registra uma compra do fornecedor."""
+        self.verificar_limite_credito(valor)
+        self.total_compras += valor
+        self.ultima_compra = timezone.now()
+        self.save()
+
+    def registrar_servico(self, valor):
+        """Registra um serviço prestado pelo fornecedor."""
+        self.verificar_limite_credito(valor)
+        self.total_servicos += valor
+        self.save()
+
+    def registrar_pagamento(self, valor):
+        """Registra um pagamento ao fornecedor."""
+        self.saldo_devedor -= valor
+        if self.saldo_devedor < 0:
+            self.saldo_devedor = 0
+        self.save()
+
+    def ativar(self):
+        """Ativa o fornecedor."""
+        self.status = 'ativo'
+        self.save()
+
+    def bloquear(self):
+        """Bloqueia o fornecedor."""
+        self.status = 'bloqueado'
+        self.save()
+
+    def inativar(self):
+        """Inativa o fornecedor."""
+        self.status = 'inativo'
+        self.save()
+
+    @property
+    def tem_debito(self):
+        """Verifica se o fornecedor tem débitos."""
+        return self.saldo_devedor > 0
+
+    @property
+    def limite_disponivel(self):
+        """Retorna o limite de crédito disponível."""
+        return self.limite_credito - self.saldo_devedor
+
+    @property
+    def total_gasto(self):
+        """Retorna o total gasto com o fornecedor."""
+        return self.total_compras + self.total_servicos
+
+    @property
+    def prazo_pagamento_dias(self):
+        """Retorna o prazo de pagamento em dias."""
+        if self.condicao_pagamento == 'a_vista':
+            return 0
+        elif self.condicao_pagamento == '30_dias':
+            return 30
+        elif self.condicao_pagamento == '60_dias':
+            return 60
+        elif self.condicao_pagamento == '90_dias':
+            return 90
+        else:
+            return self.prazo_pagamento

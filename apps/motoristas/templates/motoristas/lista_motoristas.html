@@ -1,0 +1,239 @@
+{% extends 'includes/base_cadastros.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<!-- MENSAGENS DE SUCESSO / ERRO -->
+{% if messages %}
+  <div class="mt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- CONTAINER PRINCIPAL -->
+<div class="container mt-5">
+
+  <!-- CABEÇALHO DA PÁGINA -->
+  <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded shadow-sm">
+    <a href="{% url 'motoristas:lista_motoristas' %}" class="text-decoration-none">
+      <h1 class="display-5 fw-bold text-primary">Lista de Motoristas</h1>
+    </a>
+    <button class="btn btn-success" onclick="abrirModal('{% url 'motoristas:novo_motorista' %}', 'Novo Motorista')">
+      <i class="fas fa-plus-circle me-1"></i> Novo Motorista
+    </button>
+  </div>
+
+  <!-- FORMULÁRIO DE BUSCA -->
+  <form method="get" action="{% url 'motoristas:lista_motoristas' %}" class="mb-4">
+    <div class="input-group">
+      <input type="text" name="nome" value="{{ request.GET.nome }}" class="form-control" placeholder="Buscar por nome">
+      <input type="text" name="cnh" value="{{ request.GET.cnh }}" class="form-control" placeholder="Buscar por CNH">
+      <button class="btn btn-primary" type="submit">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+    </div>
+  </form>
+
+  <!-- LISTA DE MOTORISTAS -->
+  <div class="list-group shadow-sm" id="lista-motoristas">
+    {% for motorista in motoristas %}
+    <div class="list-group-item d-flex justify-content-between align-items-center mb-3 p-3 rounded-3 border border-light bg-light">
+      <div class="d-flex align-items-center">
+        <span class="badge bg-primary me-3">{{ forloop.counter }}</span>
+        <div>
+          <h5 class="mb-1">
+            <a href="javascript:void(0);" class="text-primary fw-bold text-decoration-none"
+               onclick="abrirModalDetalhes('{% url 'motoristas:detalhes_motorista' motorista.id %}')">
+              Motorista #{{ motorista.id }}
+            </a>
+          </h5>
+          <p class="mb-1 text-muted">Nome: {{ motorista.nome }}</p>
+          <p class="mb-1"><strong>CNH:</strong> {{ motorista.cnh }}</p>
+          <p class="mb-1"><strong>Categoria:</strong> {{ motorista.categoria_cnh }}</p>
+          <p class="mb-1"><strong>Validade:</strong> {{ motorista.validade_cnh|date:"d/m/Y" }}</p>
+          <p class="mb-1"><strong>Status:</strong> {{ motorista.get_status_display }}</p>
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-primary"
+                onclick="abrirModalDetalhes('{% url 'motoristas:detalhes_motorista' motorista.id %}')"
+                title="Detalhes do Motorista">
+          <i class="fas fa-info-circle"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-warning"
+                onclick="abrirModal('{% url 'motoristas:editar_motorista' motorista.id %}', 'Editar Motorista')"
+                title="Editar Motorista">
+          <i class="fas fa-edit me-1"></i> Editar
+        </button>
+        <button class="btn btn-sm btn-outline-danger"
+           onclick="abrirModalGenerico('{% url 'motoristas:excluir_motorista' motorista.id %}', 'Excluir Motorista')">
+          <i class="fas fa-trash-alt me-1"></i> Excluir
+        </button>
+      </div>
+    </div>
+    {% empty %}
+    <div class="list-group-item text-center text-muted">Nenhum Motorista encontrado.</div>
+    {% endfor %}
+  </div>
+
+  <!-- MODAL PRINCIPAL -->
+  <div class="modal fade" id="motoristaModal" tabindex="-1" aria-labelledby="motoristaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="motoristaModalLabel">Carregando...</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          Carregando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock content %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{{ block.super }}
+
+<script>
+/**
+ * Abre um modal genérico e carrega conteúdo via AJAX
+ * @param {string} url - URL a ser carregada no modal
+ * @param {string} titulo - Título exibido no cabeçalho do modal
+ */
+function abrirModalGenerico(url, titulo = 'Carregando...') {
+  const modalLabel = document.getElementById('motoristaModalLabel');
+  const modalBody = document.getElementById('modalBody');
+
+  // Define o título do modal e mostra um spinner de carregamento
+  modalLabel.textContent = titulo;
+  modalBody.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+    </div>
+  `;
+
+  // Requisição AJAX para carregar o conteúdo do modal
+  fetch(url, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Erro ao carregar o conteúdo');
+      return response.text();
+    })
+    .then(html => {
+      modalBody.innerHTML = html;
+
+      // Exibe o modal após o carregamento do conteúdo
+      const modal = new bootstrap.Modal(document.getElementById('motoristaModal'));
+      modal.show();
+    })
+    .catch(() => {
+      modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar conteúdo.</div>';
+    });
+}
+
+// Função auxiliar para abrir formulário no modal
+function abrirModal(url, titulo = 'Formulário') {
+  abrirModalGenerico(url, titulo);
+}
+
+// Função auxiliar para abrir detalhes no modal
+function abrirModalDetalhes(url) {
+  abrirModalGenerico(url, 'Detalhes do Motorista');
+}
+
+/**
+ * Captura submissões de formulário dentro do modal e envia via AJAX
+ */
+document.addEventListener('submit', async function (e) {
+  const form = e.target;
+
+  if (form.closest('#motoristaModal')) {
+    e.preventDefault();
+    limparErrosFormulario(); // Limpa erros anteriores
+
+    const btnSubmit = form.querySelector('[type="submit"]');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Salvando...';
+    }
+
+    const formData = new FormData(form);
+    const url = form.action;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Erro ao salvar');
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Fecha o modal e recarrega a página
+        const modal = bootstrap.Modal.getInstance(document.getElementById('motoristaModal'));
+        modal.hide();
+        window.location.reload();
+      } else {
+        // Exibe erros no formulário
+        exibirErrosFormulario(data.errors);
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao salvar. Tente novamente.');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Salvar';
+      }
+    }
+  }
+});
+
+/**
+ * Limpa mensagens de erro do formulário
+ */
+function limparErrosFormulario() {
+  const errorElements = document.querySelectorAll('.invalid-feedback');
+  errorElements.forEach(el => el.remove());
+  const inputs = document.querySelectorAll('.is-invalid');
+  inputs.forEach(input => input.classList.remove('is-invalid'));
+}
+
+/**
+ * Exibe erros no formulário
+ * @param {Object} errors - Objeto com erros do formulário
+ */
+function exibirErrosFormulario(errors) {
+  for (const [field, messages] of Object.entries(errors)) {
+    const input = document.querySelector(`[name="${field}"]`);
+    if (input) {
+      input.classList.add('is-invalid');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'invalid-feedback';
+      errorDiv.textContent = messages.join(', ');
+      input.parentNode.appendChild(errorDiv);
+    }
+  }
+}
+</script>
+{% endblock extra_scripts %} 

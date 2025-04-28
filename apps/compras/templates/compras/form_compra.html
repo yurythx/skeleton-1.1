@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if form.instance.pk %}Editar{% else %}Nova{% endif %} Compra</h2>
+    <form method="post" action="{% url 'compras:nova_compra' %}" class="mt-3">
+        {% csrf_token %}
+        
+        <!-- Informações Básicas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações Básicas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.fornecedor|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.produto|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.quantidade|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.custo_unitario|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.data_compra|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações Financeiras -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações Financeiras</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.status|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.forma_pagamento|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.numero_parcelas|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.desconto|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.valor_frete|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.valor_seguro|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.valor_outras_despesas|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações da Nota Fiscal -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações da Nota Fiscal</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.numero_nota_fiscal|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.serie_nota_fiscal|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.data_emissao_nf|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações de Transporte -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informações de Transporte</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.motorista|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.veiculo|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form.placa_veiculo|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.uf_veiculo|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.data_chegada|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.data_saida|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Observações</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ form.descricao|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ form.observacoes|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+    // Atualiza o valor total quando a quantidade ou custo unitário mudar
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantidadeInput = document.getElementById('id_quantidade');
+        const custoUnitarioInput = document.getElementById('id_custo_unitario');
+        const descontoInput = document.getElementById('id_desconto');
+        const valorFreteInput = document.getElementById('id_valor_frete');
+        const valorSeguroInput = document.getElementById('id_valor_seguro');
+        const valorOutrasDespesasInput = document.getElementById('id_valor_outras_despesas');
+
+        function atualizarValores() {
+            const quantidade = parseFloat(quantidadeInput.value) || 0;
+            const custoUnitario = parseFloat(custoUnitarioInput.value) || 0;
+            const desconto = parseFloat(descontoInput.value) || 0;
+            const valorFrete = parseFloat(valorFreteInput.value) || 0;
+            const valorSeguro = parseFloat(valorSeguroInput.value) || 0;
+            const valorOutrasDespesas = parseFloat(valorOutrasDespesasInput.value) || 0;
+
+            const valorTotal = quantidade * custoUnitario;
+            const valorFinal = valorTotal - desconto + valorFrete + valorSeguro + valorOutrasDespesas;
+
+            // Atualiza os campos de valor total e valor final
+            document.getElementById('id_valor_total').value = valorTotal.toFixed(2);
+            document.getElementById('id_valor_final').value = valorFinal.toFixed(2);
+        }
+
+        quantidadeInput.addEventListener('input', atualizarValores);
+        custoUnitarioInput.addEventListener('input', atualizarValores);
+        descontoInput.addEventListener('input', atualizarValores);
+        valorFreteInput.addEventListener('input', atualizarValores);
+        valorSeguroInput.addEventListener('input', atualizarValores);
+        valorOutrasDespesasInput.addEventListener('input', atualizarValores);
+    });
+</script>
+{% endblock %}
+{% endblock %} 

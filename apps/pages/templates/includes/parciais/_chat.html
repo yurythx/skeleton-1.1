@@ -1,0 +1,59 @@
+{% load static %}
+
+{% if chatbot_enabled %}
+<!-- Botão flutuante -->
+<button id="ia-button" title="Fale com a ISA">
+  <img src="{% static 'img/isa-avatar.png' %}" alt="ISA" class="button-avatar">
+</button>
+
+<!-- Caixa do chat -->
+<div id="chat-box">
+  <div id="chat-header">
+    <div class="header-content">
+      <img src="{% static 'img/isa-avatar.png' %}" alt="ISA" class="header-avatar">
+      <div class="header-text">
+        <h3>ISA</h3>
+        <span>Assistente Virtual</span>
+      </div>
+    </div>
+    <div class="chat-actions">
+      <button id="minimize-btn" class="chat-btn" title="Minimizar">–</button>
+      <button id="close-btn" class="chat-btn" title="Fechar">×</button>
+    </div>
+  </div>
+  
+  <div id="messages"></div>
+  
+  <div id="chat-input">
+    <div class="input-wrapper">
+      <input type="text" id="user-input" placeholder="Digite sua mensagem..." autocomplete="off" />
+      <button class="send-btn" onclick="sendMessage()" title="Enviar mensagem">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Sons -->
+<audio id="send-sound" src="{% static 'sounds/send.mp3' %}" preload="auto"></audio>
+<audio id="receive-sound" src="{% static 'sounds/receive.mp3' %}" preload="auto"></audio>
+
+<!-- Configurações do Chatbot -->
+<script>
+  window.chatbotConfig = {
+    avatarUrl: "{% static 'img/isa-avatar.png' %}",
+    apiUrl: "{% url 'chatbot:chatbot_response' %}",
+    sounds: {
+      send: "{% static 'sounds/send.mp3' %}",
+      receive: "{% static 'sounds/receive.mp3' %}"
+    }
+  };
+</script>
+
+<!-- Linkando os arquivos CSS e JS -->
+<link rel="stylesheet" href="{% static 'pages/chat/css/chat.css' %}">
+<script src="{% static 'pages/chat/js/chat.js' %}"></script>
+{% endif %} 

@@ -21,30 +21,45 @@
 
   <!-- CABEÇALHO DA PÁGINA -->
   <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded shadow-sm">
-    <h1 class="display-5 fw-bold text-primary">Lista de Compras</h1>
-    <button class="btn btn-success"
-            onclick="abrirModalGenerico('{% url 'compras:comprar_nova' %}', 'Nova Compra')">
-      <i class="fas fa-cart-plus me-1"></i> Nova Compra
+    <a href="{% url 'compras:lista_compras' %}" class="text-decoration-none">
+      <h1 class="display-5 fw-bold text-primary">Lista de Compras</h1>
+    </a>
+    <button class="btn btn-success" onclick="abrirModal('{% url 'compras:nova_compra' %}', 'Nova Compra')">
+      <i class="fas fa-plus-circle me-1"></i> Nova Compra
     </button>
   </div>
 
   <!-- FORMULÁRIO DE BUSCA -->
   <form method="get" action="{% url 'compras:lista_compras' %}" class="mb-4">
-    <div class="input-group">
-      <input type="text" name="fornecedor" value="{{ request.GET.fornecedor }}" class="form-control" placeholder="Buscar por Fornecedor">
-      <input type="text" name="produto" value="{{ request.GET.produto }}" class="form-control" placeholder="Buscar por Produto">
-      <button class="btn btn-primary" type="submit">
-        <i class="fas fa-search"></i> Buscar
-      </button>
+    <div class="row g-3">
+      <div class="col-md-5">
+        <div class="input-group">
+          <input type="text" name="fornecedor" value="{{ request.GET.fornecedor }}" class="form-control" placeholder="Buscar por fornecedor">
+          <button class="btn btn-outline-primary" type="button" onclick="abrirModal('{% url 'fornecedores:novo_fornecedor' %}', 'Novo Fornecedor')">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="input-group">
+          <input type="text" name="produto" value="{{ request.GET.produto }}" class="form-control" placeholder="Buscar por produto">
+          <button class="btn btn-outline-primary" type="button" onclick="abrirModal('{% url 'produtos:novo_produto' %}', 'Novo Produto')">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
     </div>
   </form>
 
   <!-- LISTA DE COMPRAS -->
-  <div class="list-group shadow-sm" id="lista-compras">
-    {% include 'compras/_lista_compras.html' %}
-  </div>
+  {% include 'compras/_lista_compras.html' %}
 
-  <!-- MODAL GENÉRICO -->
+  <!-- MODAL PRINCIPAL -->
   <div class="modal fade" id="compraModal" tabindex="-1" aria-labelledby="compraModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -64,116 +79,161 @@
 {% endblock content %}
 
 {% block extra_scripts %}
-{{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+{{ block.super }}
+
 <script>
-  // Função para abrir o modal genérico
-  function abrirModalGenerico(url, titulo = 'Carregando...') {
-    const modalElement = document.getElementById('compraModal');
-    const modalLabel = document.getElementById('compraModalLabel');
-    const modalBody = document.getElementById('modalBody');
+let modalPrincipal = null;
+let modalAtual = null;
 
-    modalLabel.textContent = titulo;
-    modalBody.innerHTML = `
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Carregando...</span>
-        </div>
+/**
+ * Abre um modal genérico e carrega conteúdo via AJAX
+ * @param {string} url - URL a ser carregada no modal
+ * @param {string} titulo - Título exibido no cabeçalho do modal
+ */
+function abrirModalGenerico(url, titulo = 'Carregando...') {
+  const modalLabel = document.getElementById('compraModalLabel');
+  const modalBody = document.getElementById('modalBody');
+  const modalElement = document.getElementById('compraModal');
+
+  // Define o título do modal e mostra um spinner de carregamento
+  modalLabel.textContent = titulo;
+  modalBody.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
       </div>
-    `;
+    </div>
+  `;
 
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(response => response.text())
-      .then(html => {
-        modalBody.innerHTML = html;
-        new bootstrap.Modal(modalElement).show();
-        configurarSubmitAjax();
-      })
-      .catch(() => {
-        modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar conteúdo.</div>';
-      });
-  }
+  // Requisição AJAX para carregar o conteúdo do modal
+  fetch(url, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Erro ao carregar o conteúdo');
+      return response.text();
+    })
+    .then(html => {
+      modalBody.innerHTML = html;
 
-  // Envio AJAX do formulário dentro do modal
-  function configurarSubmitAjax() {
-    const form = document.querySelector('#compraModal form');
-    if (!form) return;
+      // Exibe o modal após o carregamento do conteúdo
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
 
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      const btnSubmit = form.querySelector('[type="submit"]');
-      const action = form.action;
-      const method = form.method || 'POST';
-      const formData = new FormData(form);
+      // Armazena o modal principal se for o modal de nova compra
+      if (url.includes('nova_compra')) {
+        modalPrincipal = modal;
+      } else {
+        modalAtual = modal;
+      }
 
-      limparErrosFormulario();
-      btnSubmit.disabled = true;
-      btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Salvando...`;
+      // Remove eventos anteriores para evitar duplicação
+      modalElement.removeEventListener('hidden.bs.modal', handleModalHidden);
 
-      fetch(action, {
-        method,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: formData,
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('compraModal')).hide();
-            mostrarToast(data.message || 'Operação realizada com sucesso!');
-            atualizarListaCompras();
-          } else {
-            exibirErrosFormulario(data.errors || {});
-            mostrarToast('Corrija os erros no formulário.', 'danger');
-          }
-        })
-        .catch(() => {
-          mostrarToast('Erro ao enviar o formulário.', 'danger');
-        })
-        .finally(() => {
-          btnSubmit.disabled = false;
-          btnSubmit.textContent = 'Salvar';
-        });
+      // Adiciona evento para quando o modal for fechado
+      modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
+
+      // Configura o formulário se existir
+      const form = modalBody.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar conteúdo.</div>';
     });
-  }
+}
 
-  // Função para exibir erros no formulário
-  function exibirErrosFormulario(errors) {
-    for (let campo in errors) {
-      const input = document.getElementById(`id_${campo}`);
-      if (input) {
-        input.classList.add('is-invalid');
-        const erro = document.createElement('div');
-        erro.className = 'invalid-feedback d-block';
-        erro.innerText = errors[campo][0];
-        input.insertAdjacentElement('afterend', erro);
+// Função para lidar com o fechamento do modal
+function handleModalHidden() {
+  // Se houver um modal principal e o modal atual for diferente do principal, reabre-o
+  if (modalPrincipal && modalAtual !== modalPrincipal) {
+    setTimeout(() => {
+      modalPrincipal.show();
+    }, 100);
+  }
+}
+
+// Função auxiliar para abrir formulário no modal
+function abrirModal(url, titulo = 'Formulário') {
+  abrirModalGenerico(url, titulo);
+}
+
+// Função auxiliar para abrir detalhes no modal
+function abrirModalDetalhes(url) {
+  abrirModalGenerico(url, 'Detalhes da Compra');
+}
+
+/**
+ * Manipula o envio do formulário via AJAX
+ * @param {Event} e - Evento de submit do formulário
+ */
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const url = form.action;
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type");
+    let data;
+    
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = { success: response.ok };
+    }
+
+    if (data.success) {
+      // Fecha todos os modais
+      const modalElement = document.getElementById('compraModal');
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
+      
+      // Recarrega a página após um breve delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    } else {
+      // Exibe erros no formulário
+      if (data.errors) {
+        Object.entries(data.errors).forEach(([field, errors]) => {
+          const input = form.querySelector(`[name="${field}"]`);
+          if (input) {
+            const feedbackDiv = input.parentElement.querySelector('.invalid-feedback') 
+              || document.createElement('div');
+            feedbackDiv.className = 'invalid-feedback';
+            feedbackDiv.textContent = errors.join(', ');
+            input.classList.add('is-invalid');
+            if (!input.parentElement.querySelector('.invalid-feedback')) {
+              input.parentElement.appendChild(feedbackDiv);
+            }
+          }
+        });
       }
     }
+  } catch (error) {
+    console.error('Erro:', error);
+    alert('Erro ao processar o formulário. Por favor, tente novamente.');
   }
-
-  function limparErrosFormulario() {
-    document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
-    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-  }
-
-  // Atualiza a lista de compras via AJAX
-  function atualizarListaCompras() {
-    fetch("{% url 'compras:lista_compras' %}", { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(res => res.text())
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const novaLista = doc.querySelector('#lista-compras');
-        if (novaLista) {
-          document.querySelector('#lista-compras')?.replaceWith(novaLista);
-        }
-      })
-      .catch(() => {
-        mostrarToast('Erro ao atualizar lista.', 'danger');
-      });
-  }
+}
 </script>
 {% endblock %}

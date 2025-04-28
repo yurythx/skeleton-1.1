@@ -1,0 +1,68 @@
+{% load static %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-4">Detalhes da Compra</h5>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p><strong>Fornecedor:</strong> {{ compra.fornecedor.nome }}</p>
+              <p><strong>Produto:</strong> {{ compra.produto.nome }}</p>
+              <p><strong>Quantidade:</strong> {{ compra.quantidade }}</p>
+              <p><strong>Custo Unitário:</strong> R$ {{ compra.custo_unitario }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Data da Compra:</strong> {{ compra.data_compra|date:"d/m/Y H:i" }}</p>
+              <p><strong>Status:</strong> {{ compra.get_status_display }}</p>
+              <p><strong>Forma de Pagamento:</strong> {{ compra.get_forma_pagamento_display }}</p>
+              <p><strong>Valor Total:</strong> R$ {{ compra.valor_total }}</p>
+              <p><strong>Desconto:</strong> R$ {{ compra.desconto }}</p>
+              <p><strong>Valor Final:</strong> R$ {{ compra.valor_final }}</p>
+            </div>
+          </div>
+
+          {% if compra.descricao %}
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <p><strong>Descrição:</strong></p>
+              <p>{{ compra.descricao }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if compra.observacoes %}
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <p><strong>Observações:</strong></p>
+              <p>{{ compra.observacoes }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if compra.forma_pagamento == 'prazo' %}
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <p><strong>Número de Parcelas:</strong> {{ compra.numero_parcelas }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if compra.data_entrega %}
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <p><strong>Data de Entrega:</strong> {{ compra.data_entrega|date:"d/m/Y" }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+</div> 

@@ -18,6 +18,8 @@
             <li><a href="{% url 'accounts:lista_usuarios'%}">Cadastro de Usuários</a></li>
             <li><a href="{% url 'produtos:lista_produtos'%}">Cadastro de Produtos</a></li>
             <li><a href="#">Cadastro de Veículos</a></li>
+            <li><a href="#">Cadastro de Motoristas</a></li>
+            <li><a href="#">Cadastro de Veículos</a></li>
             <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
               <ul>
                 <li><a href="#">Cadastro de Clientes</a></li>
@@ -32,7 +34,28 @@
             <li><a href="#">Dropdown 4</a></li>
           </ul>
         </li>
-        <li><a href="#">Contato</a></li>
+        <li class="dropdown"><a href="#"><span>Operacional</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'compras:lista_compras' %}">Compras</a></li>
+            <li><a href="{% url 'vendas:lista_vendas'%}">Vendas</a></li>
+            <li><a href="{% url 'financeiro:lista_financeiro'%}">Financeiro</a></li>
+            <li><a href="#">Caixa</a></li>
+            <li><a href="{% url 'pedidos:lista_pedidos'%}">Pedidos</a></li>
+            <li><a href="{% url 'estoque:lista_estoque'%}">Estoque</a></li>
+
+            <li class="dropdown"><a href="#"><span>Chatbot</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+              <ul>
+                <li><a href="#">Chatbot #1</a></li>
+                <li><a href="#">Chatbot #2</a></li>
+                <li><a href="#">Chatbot #3</a></li>
+                
+              </ul>
+            </li>
+            <li><a href="#">Dropdown 2</a></li>
+            <li><a href="#">Dropdown 3</a></li>
+            <li><a href="#">Dropdown 4</a></li>
+          </ul>
+        </li>
       </ul>
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       

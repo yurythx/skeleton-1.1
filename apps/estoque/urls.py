@@ -2,15 +2,19 @@
 
 from django.urls import path
 from .views import (
+    EstoqueListView,
+    EstoqueCreateView,
+    EstoqueUpdateView,
+    EstoqueDeleteView,
     EstoqueDetailView,
-    AtualizarEstoqueView,
-    MovimentoEstoqueListView,
 )
 
-app_name = 'estoque'  # Adicionando o app_name para definir o namespace
+app_name = 'estoque'
 
 urlpatterns = [
-    path('<slug:slug>/', EstoqueDetailView.as_view(), name='detalhes_estoque'),  # Visualizar estoque de um produto
-    path('<slug:slug>/atualizar/', AtualizarEstoqueView.as_view(), name='editar_estoque'),  # Atualizar estoque via AJAX
-    path('<slug:slug>/movimentos/', MovimentoEstoqueListView.as_view(), name='movimentos_estoque'),  # Listar movimentos de estoque de um produto
+    path('', EstoqueListView.as_view(), name='lista_estoque'),
+    path('detalhes/<slug:slug>/', EstoqueDetailView.as_view(), name='detalhes_estoque'),
+    path('novo/', EstoqueCreateView.as_view(), name='novo_estoque'),
+    path('<slug:slug>/editar/', EstoqueUpdateView.as_view(), name='editar_estoque'),
+    path('<slug:slug>/excluir/', EstoqueDeleteView.as_view(), name='excluir_estoque'),
 ]

@@ -1,0 +1,118 @@
+{% load crispy_forms_tags %}
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Detalhes do Pedido</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Cliente:</label>
+        <p>{{ pedido.cliente.nome }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Data do Pedido:</label>
+        <p>{{ pedido.data_pedido|date:"d/m/Y" }}</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Valor Total:</label>
+        <p>R$ {{ pedido.valor_total|floatformat:2 }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Forma de Pagamento:</label>
+        <p>{{ pedido.get_forma_pagamento_display }}</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label fw-bold">Status:</label>
+        <p>
+          {% if pedido.status == 'pendente' %}
+            <span class="badge bg-warning">Pendente</span>
+          {% elif pedido.status == 'aprovado' %}
+            <span class="badge bg-success">Aprovado</span>
+          {% elif pedido.status == 'cancelado' %}
+            <span class="badge bg-danger">Cancelado</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Itens do Pedido:</label>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Valor Unitário</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in pedido.itens.all %}
+              <tr>
+                <td>{{ item.produto.nome }}</td>
+                <td>{{ item.quantidade }}</td>
+                <td>R$ {{ item.valor_unitario|floatformat:2 }}</td>
+                <td>R$ {{ item.subtotal|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {% if pedido.observacoes %}
+    <div class="row">
+      <div class="col-12 mb-3">
+        <label class="form-label fw-bold">Observações:</label>
+        <p>{{ pedido.observacoes }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-12">
+        <label class="form-label fw-bold">Histórico de Alterações:</label>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in pedido.logs.all %}
+              <tr>
+                <td>{{ log.data_alteracao|date:"d/m/Y H:i" }}</td>
+                <td>{{ log.usuario.username }}</td>
+                <td>{{ log.get_acao_display }}</td>
+                <td>{{ log.detalhes }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center">Nenhum registro encontrado</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      <a href="{% url 'pedidos:editar_pedido' pedido.id %}" class="btn btn-primary">Editar</a>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2>Confirmar Exclusão</h2>
+
+  <div class="alert alert-warning" role="alert">
+    <strong>Atenção!</strong> A exclusão é permanente. Tem certeza que deseja excluir a venda <strong>#{{ venda.id }}</strong>?
+  </div>
+
+  <form method="post" action="{% url 'vendas:excluir_venda' venda.id %}">
+    {% csrf_token %}
+    <div class="mt-4 d-flex justify-content-end">
+      <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-danger" id="btn-excluir-venda">Excluir</button>
+    </div>
+  </form>
+</div>
+{% endblock %} 

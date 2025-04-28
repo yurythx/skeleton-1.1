@@ -25,6 +25,10 @@ urlpatterns = [
     path('veiculos/', include('apps.veiculos.urls', namespace='veiculos')),
     path('motoristas/', include('apps.motoristas.urls', namespace='motoristas')),
 
+   
+    path('chatbot/', include('apps.chatbot.urls', namespace='chatbot')),
+
+
     
     path('projetos/', include('apps.projetos.urls', namespace='projetos')),
     path('tinymce/', include('tinymce.urls')),
